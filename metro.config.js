@@ -1,5 +1,5 @@
 const { getDefaultConfig } = require("expo/config");
-const { withNativeWind } = require("nativewind/utils");
+const { withNativeWind } = require("nativewind/metro");
 
 const config = getDefaultConfig(__dirname);
 
