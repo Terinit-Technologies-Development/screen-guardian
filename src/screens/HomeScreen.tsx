@@ -6,7 +6,7 @@ import AppUsageItem from '@/components/dashboard/AppUsageItem';
 import { useUsageStore } from '@/store/usageStore';
 import { formatTime } from '@/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, Smartphone, Eye } from 'lucide-react';
+import { RefreshCw, Smartphone, Eye, Zap } from 'lucide-react';
 
 export default function HomeScreen() {
   const {
@@ -40,30 +40,32 @@ export default function HomeScreen() {
   return (
     <div className="p-4 pb-24 space-y-4 max-w-lg mx-auto">
       {/* Hero Card */}
-      <Card className="overflow-hidden">
-        <CardContent className="flex flex-col items-center py-8">
+      <Card className="overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-neon-cyan/5 via-transparent to-neon-purple/5 pointer-events-none" />
+        <CardContent className="flex flex-col items-center py-8 relative">
           <ProgressRing
             progress={progress}
             size={180}
-            strokeWidth={14}
+            strokeWidth={10}
             label="remaining"
             value={formatTime(timeRemaining)}
           />
 
           <div className="grid grid-cols-2 gap-6 mt-6 w-full">
             <div className="text-center">
-              <p className="text-2xl font-bold text-foreground">{formatTime(totalScreenTime)}</p>
-              <p className="text-xs text-muted-foreground">Used Today</p>
+              <p className="text-2xl font-bold font-mono neon-text-cyan">{formatTime(totalScreenTime)}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Used Today</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-foreground">{formatTime(dailyLimit)}</p>
-              <p className="text-xs text-muted-foreground">Daily Limit</p>
+              <p className="text-2xl font-bold font-mono text-foreground">{formatTime(dailyLimit)}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Daily Limit</p>
             </div>
           </div>
 
           {isLimitExceeded && (
-            <div className="mt-4 px-4 py-2 bg-destructive/10 text-destructive rounded-lg text-sm font-medium">
-              ⚠️ Daily limit exceeded!
+            <div className="mt-4 px-4 py-2 border border-neon-pink/30 bg-neon-pink/5 rounded-lg text-sm font-medium neon-text-pink flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Daily limit exceeded
             </div>
           )}
 
@@ -71,7 +73,7 @@ export default function HomeScreen() {
             variant="ghost"
             size="sm"
             onClick={refreshData}
-            className="mt-4 gap-2"
+            className="mt-4 gap-2 text-muted-foreground hover:text-foreground"
             disabled={isLoading}
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -82,27 +84,27 @@ export default function HomeScreen() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <Card>
+        <Card className="border-neon-cyan/10 hover:border-neon-cyan/30 transition-colors">
           <CardContent className="flex items-center gap-3 p-4">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Smartphone className="h-5 w-5 text-primary" />
+            <div className="p-2 bg-neon-cyan/10 rounded-lg neon-glow-cyan">
+              <Smartphone className="h-5 w-5 text-neon-cyan" />
             </div>
             <div>
-              <p className="text-xl font-bold text-foreground">{todayApps.length}</p>
-              <p className="text-xs text-muted-foreground">Apps Used</p>
+              <p className="text-xl font-bold font-mono text-foreground">{todayApps.length}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Apps</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-neon-purple/10 hover:border-neon-purple/30 transition-colors">
           <CardContent className="flex items-center gap-3 p-4">
-            <div className="p-2 bg-secondary/10 rounded-lg">
-              <Eye className="h-5 w-5 text-secondary" />
+            <div className="p-2 bg-neon-purple/10 rounded-lg neon-glow-purple">
+              <Eye className="h-5 w-5 text-neon-purple" />
             </div>
             <div>
-              <p className="text-xl font-bold text-foreground">
+              <p className="text-xl font-bold font-mono text-foreground">
                 {todayApps.reduce((sum, app) => sum + app.launchCount, 0)}
               </p>
-              <p className="text-xs text-muted-foreground">Total Opens</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Opens</p>
             </div>
           </CardContent>
         </Card>
@@ -111,7 +113,7 @@ export default function HomeScreen() {
       {/* Most Used Apps */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Most Used Today</CardTitle>
+          <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground font-medium">Most Used Today</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
           {todayApps.slice(0, 5).map((app) => (

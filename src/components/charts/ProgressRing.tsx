@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 interface ProgressRingProps {
-  progress: number; // 0 to 1
+  progress: number;
   size?: number;
   strokeWidth?: number;
   label: string;
@@ -12,7 +12,7 @@ interface ProgressRingProps {
 export default function ProgressRing({
   progress,
   size = 200,
-  strokeWidth = 14,
+  strokeWidth = 10,
   label,
   value,
   className,
@@ -24,9 +24,15 @@ export default function ProgressRing({
   const strokeDashoffset = circumference * (1 - clampedProgress);
 
   const getColor = () => {
-    if (progress > 0.9) return 'hsl(var(--destructive))';
-    if (progress > 0.7) return 'hsl(var(--warning))';
-    return 'hsl(var(--primary))';
+    if (progress > 0.9) return 'hsl(var(--neon-pink))';
+    if (progress > 0.7) return 'hsl(var(--neon-purple))';
+    return 'hsl(var(--neon-cyan))';
+  };
+
+  const getGlow = () => {
+    if (progress > 0.9) return '0 0 12px hsl(var(--neon-pink) / 0.5)';
+    if (progress > 0.7) return '0 0 12px hsl(var(--neon-purple) / 0.5)';
+    return '0 0 12px hsl(var(--neon-cyan) / 0.5)';
   };
 
   return (
@@ -37,7 +43,7 @@ export default function ProgressRing({
           cy={center}
           r={radius}
           fill="none"
-          stroke="hsl(var(--muted))"
+          stroke="hsl(var(--border))"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -51,11 +57,12 @@ export default function ProgressRing({
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           className="transition-all duration-700 ease-out"
+          style={{ filter: `drop-shadow(${getGlow()})` }}
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-3xl font-bold text-foreground">{value}</span>
-        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-3xl font-bold font-mono text-foreground">{value}</span>
+        <span className="text-xs text-muted-foreground uppercase tracking-wider">{label}</span>
       </div>
     </div>
   );

@@ -26,7 +26,7 @@ export default function AppsScreen() {
 
   return (
     <div className="p-4 pb-24 space-y-4 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">Apps</h1>
+      <h1 className="text-xl font-bold text-foreground tracking-tight">Apps</h1>
 
       {/* Category Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -34,7 +34,7 @@ export default function AppsScreen() {
           size="sm"
           variant={activeFilter === 'All' ? 'default' : 'outline'}
           onClick={() => setActiveFilter('All')}
-          className="flex-shrink-0"
+          className="flex-shrink-0 text-xs h-8"
         >
           All
         </Button>
@@ -44,7 +44,7 @@ export default function AppsScreen() {
             size="sm"
             variant={activeFilter === cat ? 'default' : 'outline'}
             onClick={() => setActiveFilter(cat as Filter)}
-            className="flex-shrink-0"
+            className="flex-shrink-0 text-xs h-8"
           >
             {cat}
           </Button>
@@ -55,17 +55,17 @@ export default function AppsScreen() {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">
+            <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
               {activeFilter === 'All' ? 'All Apps' : activeFilter}
             </CardTitle>
-            <Badge variant="secondary">{filteredApps.length} apps</Badge>
+            <Badge variant="secondary" className="font-mono text-[10px]">{filteredApps.length}</Badge>
           </div>
         </CardHeader>
         <CardContent>
           {filteredApps.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
-              <p className="text-3xl mb-2">📭</p>
-              <p>No apps in this category</p>
+              <p className="text-2xl mb-2">—</p>
+              <p className="text-xs uppercase tracking-wider">No apps in this category</p>
             </div>
           ) : (
             <div className="space-y-1">
