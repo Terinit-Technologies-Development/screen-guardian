@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppLimit } from '../types/usage';
 
 interface SettingsState {
@@ -70,6 +71,9 @@ export const useSettingsStore = create<SettingsState>()(
         notificationsEnabled: true,
       }),
     }),
-    { name: 'screen-time-settings' }
+    {
+      name: 'screen-time-settings',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
   )
 );
