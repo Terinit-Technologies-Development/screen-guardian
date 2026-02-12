@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ScreenTimeBarChart from '@/components/charts/ScreenTimeBarChart';
 import { useUsageStore } from '@/store/usageStore';
 import { useExerciseStore } from '@/store/exerciseStore';
-import { formatTime, formatPercentage } from '@/utils/formatters';
+import { formatTime } from '@/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingDown, TrendingUp, Target, Dumbbell } from 'lucide-react';
 
@@ -38,12 +38,12 @@ export default function ProgressScreen() {
 
   return (
     <div className="p-4 pb-24 space-y-4 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">Progress</h1>
+      <h1 className="text-xl font-bold text-foreground tracking-tight">Progress</h1>
 
       {/* Weekly Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Screen Time This Week</CardTitle>
+          <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Screen Time This Week</CardTitle>
         </CardHeader>
         <CardContent>
           <ScreenTimeBarChart data={chartData} />
@@ -52,46 +52,46 @@ export default function ProgressScreen() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
-        <Card>
+        <Card className="border-neon-cyan/10">
           <CardContent className="p-4 text-center">
-            <TrendingDown className="h-5 w-5 mx-auto mb-1 text-primary" />
-            <p className="text-xl font-bold text-foreground">{formatTime(averageTime)}</p>
-            <p className="text-xs text-muted-foreground">Daily Average</p>
+            <TrendingDown className="h-4 w-4 mx-auto mb-2 text-neon-cyan" />
+            <p className="text-lg font-bold font-mono text-foreground">{formatTime(averageTime)}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Daily Avg</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-neon-green/10">
           <CardContent className="p-4 text-center">
-            <Target className="h-5 w-5 mx-auto mb-1 text-success" />
-            <p className="text-xl font-bold text-foreground">{daysUnderLimit}/{weeklyData.length}</p>
-            <p className="text-xs text-muted-foreground">Days Under Limit</p>
+            <Target className="h-4 w-4 mx-auto mb-2 text-neon-green" />
+            <p className="text-lg font-bold font-mono text-foreground">{daysUnderLimit}/{weeklyData.length}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Under Limit</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-neon-purple/10">
           <CardContent className="p-4 text-center">
-            <Dumbbell className="h-5 w-5 mx-auto mb-1 text-warning" />
-            <p className="text-xl font-bold text-foreground">{stats.totalCompleted}</p>
-            <p className="text-xs text-muted-foreground">Exercises Done</p>
+            <Dumbbell className="h-4 w-4 mx-auto mb-2 text-neon-purple" />
+            <p className="text-lg font-bold font-mono text-foreground">{stats.totalCompleted}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Exercises</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-neon-pink/10">
           <CardContent className="p-4 text-center">
-            <TrendingUp className="h-5 w-5 mx-auto mb-1 text-info" />
-            <p className="text-xl font-bold text-foreground">{formatTime(stats.totalDuration)}</p>
-            <p className="text-xs text-muted-foreground">Exercise Time</p>
+            <TrendingUp className="h-4 w-4 mx-auto mb-2 text-neon-pink" />
+            <p className="text-lg font-bold font-mono text-foreground">{formatTime(stats.totalDuration)}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Active Time</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Insights */}
-      <Card>
+      <Card className="bg-gradient-to-br from-neon-cyan/5 to-transparent">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">📊 Insights</CardTitle>
+          <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Insights</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {averageTime > 7200
-              ? "You're averaging above your 2-hour daily goal. Consider setting stricter limits on your most-used apps to build healthier habits."
-              : "Great job! You're consistently staying under your daily limit. Keep building those healthy digital habits! 🎉"}
+              ? "You're averaging above your 2-hour daily goal. Consider setting stricter limits on your most-used apps."
+              : "Great job staying under your daily limit. Keep building those healthy digital habits."}
           </p>
         </CardContent>
       </Card>
