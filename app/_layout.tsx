@@ -4,8 +4,8 @@ import { useSettingsStore } from '../src/store/settingsStore';
 import '../src/global.css';
 
 export default function RootLayout() {
-    const completeOnboarding = useSettingsStore((s) => s.completeOnboarding);
-    const hasCompletedOnboarding = useSettingsStore((s) => s.hasCompletedOnboarding);
+    const completeOnboarding = useSettingsStore((s: any) => s.completeOnboarding);
+    const hasCompletedOnboarding = useSettingsStore((s: any) => s.hasCompletedOnboarding);
 
     return (
         <Stack screenOptions={{ headerShown: false }}>

@@ -70,7 +70,7 @@ class MockDataService {
 
   getTodayUsage(): UsageData {
     const totalScreenTime = this.mockApps.reduce(
-      (sum, app) => sum + app.timeInForeground,
+      (sum: number, app: AppUsageData) => sum + app.timeInForeground,
       0
     );
 
@@ -85,7 +85,7 @@ class MockDataService {
   getWeeklyData(): DailySummary[] {
     const dates = getLast7Days();
 
-    return dates.map((date, index) => {
+    return dates.map((date: string, index: number) => {
       const baseTime = 7200 + Math.random() * 3600;
       const trend = index * 200;
 

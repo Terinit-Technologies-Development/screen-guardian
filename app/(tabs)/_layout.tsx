@@ -15,28 +15,28 @@ export default function TabLayout() {
                 name="index"
                 options={{
                     title: 'Home',
-                    tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+                    tabBarIcon: ({ color }: { color: string }) => <Home size={24} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="apps"
                 options={{
                     title: 'Apps',
-                    tabBarIcon: ({ color }) => <Smartphone size={24} color={color} />,
+                    tabBarIcon: ({ color }: { color: string }) => <Smartphone size={24} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="progress"
                 options={{
                     title: 'Progress',
-                    tabBarIcon: ({ color }) => <BarChart2 size={24} color={color} />,
+                    tabBarIcon: ({ color }: { color: string }) => <BarChart2 size={24} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="settings"
                 options={{
                     title: 'Settings',
-                    tabBarIcon: ({ color }) => <Settings size={24} color={color} />,
+                    tabBarIcon: ({ color }: { color: string }) => <Settings size={24} color={color} />,
                 }}
             />
         </Tabs>

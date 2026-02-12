@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ExerciseSession, ExerciseStats } from '../types/exercise';
 
 interface ExerciseState {
@@ -41,6 +42,9 @@ export const useExerciseStore = create<ExerciseState>()(
         return get().completedSessions.slice(0, count);
       },
     }),
-    { name: 'screen-time-exercises' }
+    {
+      name: 'screen-time-exercises',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
   )
 );

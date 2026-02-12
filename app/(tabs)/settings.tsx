@@ -38,7 +38,7 @@ export default function SettingsScreen() {
                     </StyledView>
                     {/* Slider replacement - Simple buttons for now as RN slider needs extra dep or custom implementation */}
                     <StyledView className="flex-row gap-2">
-                        {[3600, 7200, 10800, 14400, 18000].map((val) => (
+                        {[3600, 7200, 10800, 14400, 18000].map((val: number) => (
                             <TouchableOpacity
                                 key={val}
                                 onPress={() => setDailyLimit(val)}

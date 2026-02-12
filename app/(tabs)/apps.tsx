@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useUsageStore } from '../../src/store/usageStore';
-import { AppCategory } from '../../src/types/usage';
+import { AppCategory, AppUsageData } from '../../src/types/usage';
 import { APP_CATEGORIES } from '../../src/utils/constants';
 import { Smartphone } from 'lucide-react-native';
 import { styled } from 'nativewind';
@@ -23,7 +23,7 @@ export default function AppsScreen() {
 
     const filteredApps = activeFilter === 'All'
         ? todayApps
-        : todayApps.filter(app => app.category === activeFilter);
+        : todayApps.filter((app: AppUsageData) => app.category === activeFilter);
 
     return (
         <SafeAreaView className="flex-1 bg-background">
@@ -71,7 +71,7 @@ export default function AppsScreen() {
                             </StyledView>
                         ) : (
                             <StyledView className="space-y-4">
-                                {filteredApps.map((app) => (
+                                {filteredApps.map((app: AppUsageData) => (
                                     <StyledView key={app.packageName} className="flex-row items-center justify-between">
                                         <StyledView className="flex-row items-center gap-3">
                                             <StyledView className="w-10 h-10 bg-muted rounded-lg items-center justify-center">

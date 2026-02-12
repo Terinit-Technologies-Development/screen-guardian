@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
 import { View, Text, ScrollView, SafeAreaView } from 'react-native';
 import { useUsageStore } from '../../src/store/usageStore';
 import { useExerciseStore } from '../../src/store/exerciseStore';
+import { DailySummary } from '../../src/types/usage';
 import { formatTime } from '../../src/utils/formatters';
 import { TrendingDown, TrendingUp, Target, Dumbbell } from 'lucide-react-native';
 import { styled } from 'nativewind';
@@ -18,10 +18,10 @@ export default function ProgressScreen() {
     }, []);
 
     const averageTime = weeklyData.length > 0
-        ? Math.floor(weeklyData.reduce((sum, d) => sum + d.totalScreenTime, 0) / weeklyData.length)
+        ? Math.floor(weeklyData.reduce((sum: number, d: DailySummary) => sum + d.totalScreenTime, 0) / weeklyData.length)
         : 0;
 
-    const daysUnderLimit = weeklyData.filter(d => !d.limitExceeded).length;
+    const daysUnderLimit = weeklyData.filter((d: DailySummary) => !d.limitExceeded).length;
 
     return (
         <SafeAreaView className="flex-1 bg-background">

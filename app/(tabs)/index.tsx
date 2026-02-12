@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useUsageStore } from '../../src/store/usageStore';
+import { AppUsageData } from '../../src/types/usage';
 import { formatTime } from '../../src/utils/formatters';
 import { RefreshCw, Smartphone, Eye, Zap } from 'lucide-react-native';
 import { styled } from 'nativewind';
@@ -100,7 +100,7 @@ export default function HomeScreen() {
                         Most Used Today
                     </StyledText>
                     <StyledView className="space-y-4">
-                        {todayApps.slice(0, 5).map((app) => (
+                        {todayApps.slice(0, 5).map((app: AppUsageData) => (
                             <StyledView key={app.packageName} className="flex-row items-center justify-between">
                                 <StyledView className="flex-row items-center gap-3">
                                     <StyledView className="w-10 h-10 bg-muted rounded-lg items-center justify-center">
