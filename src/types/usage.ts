@@ -1,11 +1,17 @@
 export interface AppUsageData {
   packageName: string;
   appName: string;
-  appIcon: string;
+  appIcon?: string;
   timeInForeground: number; // seconds
   launchCount: number;
   lastTimeUsed: number; // timestamp
-  category: AppCategory;
+  category?: AppCategory;
+}
+
+export interface AuthorizationResult {
+  authorized: boolean;
+  status: string;
+  message?: string;
 }
 
 export interface UsageData {
