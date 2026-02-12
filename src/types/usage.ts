@@ -3,7 +3,7 @@ export interface AppUsageData {
   appName: string;
   appIcon?: string;
   timeInForeground: number; // seconds
-  launchCount: number;
+  launchCount?: number;
   lastTimeUsed: number; // timestamp
   category?: AppCategory;
 }
