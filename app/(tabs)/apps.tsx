@@ -1,24 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useUsageStore } from '../../src/store/usageStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { AppCategory } from '../../src/types/usage';
 import { APP_CATEGORIES } from '../../src/utils/constants';
 import { Smartphone, Search, Filter, Shield, Clock, ChevronRight, Activity } from 'lucide-react-native';
 import { formatTime } from '../../src/utils/formatters';
-import { AppLimitModal } from '../../src/components/AppLimitModal';
 import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
 
 const allFilter = 'All' as const;
 type FilterType = typeof allFilter | AppCategory;
 
 export default function AppsScreen() {
+    const router = useRouter();
     const { todayApps, allApps, isLoading, loadTodayUsage, loadAllApps, totalScreenTime } = useUsageStore();
     const { perAppLimits } = useSettingsStore();
     const [activeFilter, setActiveFilter] = useState<FilterType>('All');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedApp, setSelectedApp] = useState<{ packageName: string, appName: string } | null>(null);
-    const [isModalVisible, setIsModalVisible] = useState(false);
 
     useEffect(() => {
         loadTodayUsage();
@@ -142,11 +141,10 @@ export default function AppsScreen() {
                                         >
                                             <TouchableOpacity
                                                 onPress={() => {
-                                                    setSelectedApp({
-                                                        packageName: app.packageName,
-                                                        appName: app.appName
+                                                    router.push({
+                                                        pathname: "/app-details/[packageName]",
+                                                        params: { packageName: app.packageName }
                                                     });
-                                                    setIsModalVisible(true);
                                                 }}
                                                 activeOpacity={0.7}
                                                 className={`p-4 rounded-[28px] border ${app.hasLimit ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-card border-border/80 shadow-sm'}`}
@@ -205,15 +203,6 @@ export default function AppsScreen() {
                     </ScrollView>
                 </View>
             </KeyboardAvoidingView>
-
-            <AppLimitModal
-                isVisible={isModalVisible}
-                app={selectedApp}
-                onClose={() => {
-                    setIsModalVisible(false);
-                    setSelectedApp(null);
-                }}
-            />
         </SafeAreaView>
     );
 }

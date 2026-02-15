@@ -1,11 +1,12 @@
 import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, AppState, Dimensions } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useUsageStore } from '../../src/store/usageStore';
+import { useSettingsStore } from '../../src/store/settingsStore';
 import { usePermissionStore } from '../../src/store/usePermissionStore';
 import { PermissionPrompt } from '../../src/components/PermissionPrompt';
 import { AppUsageData } from '../../src/types/usage';
 import { formatTime } from '../../src/utils/formatters';
-import { RefreshCw, Smartphone, Eye, Zap, LayoutGrid, Clock, ChevronRight } from 'lucide-react-native';
+import { RefreshCw, Smartphone, Eye, Zap, LayoutGrid, Clock, ChevronRight, Shield } from 'lucide-react-native';
 import Animated, {
     FadeInDown,
     FadeInUp,
@@ -16,9 +17,12 @@ import Animated, {
     withSequence
 } from 'react-native-reanimated';
 
+import { useRouter } from 'expo-router';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function HomeScreen() {
+    const router = useRouter();
     const {
         totalScreenTime,
         dailyLimit,
@@ -29,6 +33,7 @@ export default function HomeScreen() {
         isLimitExceeded,
     } = useUsageStore();
 
+    const { perAppLimits } = useSettingsStore();
     const { checkAllPermissions } = usePermissionStore();
 
     useEffect(() => {
@@ -186,11 +191,21 @@ export default function HomeScreen() {
                                 return (
                                     <TouchableOpacity
                                         key={app.packageName}
+                                        onPress={() => {
+                                            router.push({
+                                                pathname: "/app-details/[packageName]",
+                                                params: { packageName: app.packageName }
+                                            });
+                                        }}
                                         activeOpacity={0.7}
-                                        className="bg-card border border-border/80 p-4 rounded-3xl flex-row items-center gap-4 shadow-sm"
+                                        className={`p-4 rounded-[28px] border flex-row items-center gap-4 ${perAppLimits[app.packageName] ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-card border-border/80 shadow-sm'}`}
                                     >
-                                        <View className="w-14 h-14 bg-muted/40 rounded-2xl items-center justify-center border border-border/40">
-                                            <Smartphone size={22} color="#666" />
+                                        <View className={`w-14 h-14 rounded-2xl items-center justify-center border ${perAppLimits[app.packageName] ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-muted/40 border-border/40'}`}>
+                                            {perAppLimits[app.packageName] ? (
+                                                <Shield size={22} color="#06b6d4" />
+                                            ) : (
+                                                <Smartphone size={22} color="#666" />
+                                            )}
                                         </View>
                                         <View className="flex-1">
                                             <View className="flex-row justify-between items-center mb-1.5">
