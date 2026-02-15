@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppLimit } from '../types/usage';
+import AppInterventionManager from '../native/AppInterventionManager';
 
 interface SettingsState {
   dailyScreenTimeLimit: number;
@@ -41,17 +42,20 @@ export const useSettingsStore = create<SettingsState>()(
 
       setAppLimit: (appId, limit) => {
         const current = get().perAppLimits;
-        set({
-          perAppLimits: {
-            ...current,
-            [appId]: { ...current[appId], ...limit, appId } as AppLimit,
-          },
-        });
+        const updated = {
+          ...current,
+          [appId]: { ...current[appId], ...limit, appId } as AppLimit,
+        };
+        set({ perAppLimits: updated });
+        // Sync to native for background enforcement
+        AppInterventionManager.syncLimits(updated);
       },
 
       removeAppLimit: (appId) => {
         const { [appId]: _, ...remaining } = get().perAppLimits;
         set({ perAppLimits: remaining });
+        // Sync to native for background enforcement
+        AppInterventionManager.syncLimits(remaining);
       },
 
       setCooldownDuration: (seconds) => set({ cooldownDuration: seconds }),
@@ -74,6 +78,14 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'screen-time-settings',
       storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: (state) => {
+        return (hydratedState) => {
+          if (hydratedState) {
+            // Sync to native after loading from storage
+            AppInterventionManager.syncLimits(hydratedState.perAppLimits);
+          }
+        };
+      }
     }
   )
 );

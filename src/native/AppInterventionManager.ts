@@ -117,6 +117,17 @@ class AppInterventionService {
             throw error;
         }
     }
+
+    async syncLimits(limits: Record<string, any>): Promise<boolean> {
+        if (Platform.OS === 'ios' || !NativeModule) return false;
+        try {
+            const result = await NativeModule.syncLimits(limits);
+            return result.success;
+        } catch (error) {
+            console.error('Sync limits failed:', error);
+            throw error;
+        }
+    }
 }
 
 export default new AppInterventionService();

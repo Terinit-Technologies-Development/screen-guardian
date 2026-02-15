@@ -31,6 +31,7 @@ export default function HomeScreen() {
         loadTodayUsage,
         refreshData,
         isLimitExceeded,
+        startMonitoring,
     } = useUsageStore();
 
     const { perAppLimits } = useSettingsStore();
@@ -41,6 +42,8 @@ export default function HomeScreen() {
             await useUsageStore.getState().checkAuthorization();
             await loadTodayUsage();
             checkAllPermissions();
+            // Start background monitoring service for real-time enforcement
+            startMonitoring();
         };
 
         init();
@@ -137,6 +140,67 @@ export default function HomeScreen() {
                 <View className="px-4 mb-8">
                     <PermissionPrompt />
                 </View>
+
+                {/* Restricted Apps Section */}
+                {Object.keys(perAppLimits).length > 0 && (
+                    <Animated.View
+                        entering={FadeInDown.delay(250).springify()}
+                        className="px-4 mb-10"
+                    >
+                        <View className="flex-row items-center justify-between mb-4 px-2">
+                            <Text className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">Active Restrictions</Text>
+                            <Shield size={16} color="#06b6d4" />
+                        </View>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            className="flex-row gap-4"
+                            contentContainerStyle={{ paddingRight: 20 }}
+                        >
+                            {Object.entries(perAppLimits).map(([pkg, limit]: [string, any]) => {
+                                const app = todayApps.find(a => a.packageName === pkg);
+                                if (!limit.enabled) return null;
+
+                                const currentUsage = app?.timeInForeground || 0;
+                                const limitMinutes = limit.dailyTimeLimit || 0;
+                                const progress = limitMinutes > 0 ? Math.min(100, (currentUsage / (limitMinutes * 60)) * 100) : 0;
+                                const isNearLimit = progress > 80;
+
+                                return (
+                                    <TouchableOpacity
+                                        key={pkg}
+                                        onPress={() => {
+                                            router.push({
+                                                pathname: "/app-details/[packageName]",
+                                                params: { packageName: pkg }
+                                            });
+                                        }}
+                                        activeOpacity={0.8}
+                                        className={`w-40 bg-card border ${isNearLimit ? 'border-pink-500/30' : 'border-border/80'} p-5 rounded-[32px] shadow-sm`}
+                                    >
+                                        <View className={`w-12 h-12 ${isNearLimit ? 'bg-pink-500/10' : 'bg-cyan-500/10'} rounded-2xl items-center justify-center mb-3`}>
+                                            <Shield size={20} color={isNearLimit ? '#ec4899' : '#06b6d4'} />
+                                        </View>
+                                        <Text className="text-sm font-bold text-foreground mb-1" numberOfLines={1}>
+                                            {app?.appName || pkg.split('.').pop()}
+                                        </Text>
+                                        <View className="flex-row items-center gap-1.5 mb-3">
+                                            <Clock size={10} color="#666" />
+                                            <Text className="text-[10px] text-muted-foreground font-bold">{formatTime(currentUsage)}</Text>
+                                        </View>
+
+                                        <View className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                            <View
+                                                className={`h-full ${isNearLimit ? 'bg-pink-500' : 'bg-cyan-500'}`}
+                                                style={{ width: `${Math.max(5, progress)}%` }}
+                                            />
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    </Animated.View>
+                )}
 
                 {/* Stats Row */}
                 <Animated.View
