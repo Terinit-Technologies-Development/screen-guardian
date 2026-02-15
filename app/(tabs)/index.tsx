@@ -21,13 +21,19 @@ export default function HomeScreen() {
     const { checkAllPermissions } = usePermissionStore();
 
     useEffect(() => {
-        loadTodayUsage();
-        checkAllPermissions();
+        const init = async () => {
+            await useUsageStore.getState().checkAuthorization();
+            await loadTodayUsage();
+            checkAllPermissions();
+        };
+
+        init();
 
         // Check permissions again when app comes to foreground
         const subscription = AppState.addEventListener('change', (nextAppState) => {
             if (nextAppState === 'active') {
                 checkAllPermissions();
+                refreshData();
             }
         });
 
@@ -39,7 +45,10 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-background">
-            <ScrollView className="p-4 space-y-4">
+            <ScrollView
+                className="flex-1 px-4"
+                contentContainerStyle={{ paddingVertical: 24, gap: 24 }}
+            >
                 {/* Permissions Guidance */}
                 <PermissionPrompt />
 
@@ -84,7 +93,7 @@ export default function HomeScreen() {
                 </View>
 
                 {/* Quick Stats */}
-                <View className="flex-row gap-3">
+                <View className="flex-row gap-4">
                     <View className="flex-1 bg-card border border-border p-4 rounded-xl flex-row items-center gap-3">
                         <View className="p-2 bg-cyan-500/10 rounded-lg">
                             <Smartphone size={20} color="#06b6d4" />
@@ -113,20 +122,36 @@ export default function HomeScreen() {
                     <Text className="text-sm uppercase tracking-wider text-muted-foreground font-medium mb-4">
                         Most Used Today
                     </Text>
-                    <View className="space-y-4">
-                        {todayApps.slice(0, 5).map((app: AppUsageData) => (
-                            <View key={app.packageName} className="flex-row items-center justify-between">
-                                <View className="flex-row items-center gap-3">
-                                    <View className="w-10 h-10 bg-muted rounded-lg items-center justify-center">
-                                        <Smartphone size={20} color="#666" />
-                                    </View>
-                                    <View>
-                                        <Text className="text-sm font-medium text-foreground">{app.appName}</Text>
-                                        <Text className="text-xs text-muted-foreground">{formatTime(app.timeInForeground)}</Text>
-                                    </View>
-                                </View>
+                    <View className="space-y-5">
+                        {todayApps.length === 0 ? (
+                            <View className="py-8 items-center justify-center">
+                                <Text className="text-muted-foreground text-xs uppercase tracking-widest">No usage data today</Text>
                             </View>
-                        ))}
+                        ) : (
+                            todayApps.slice(0, 5).map((app: AppUsageData) => {
+                                const appProgress = totalScreenTime > 0 ? (app.timeInForeground / totalScreenTime) : 0;
+                                return (
+                                    <View key={app.packageName} className="flex-row items-center gap-4">
+                                        <View className="w-12 h-12 bg-muted/50 rounded-2xl items-center justify-center border border-border/50">
+                                            <Smartphone size={22} color="#666" />
+                                        </View>
+                                        <View className="flex-1">
+                                            <View className="flex-row justify-between items-center mb-1.5">
+                                                <Text className="text-sm font-semibold text-foreground">{app.appName}</Text>
+                                                <Text className="text-xs font-bold text-cyan-500">{formatTime(app.timeInForeground)}</Text>
+                                            </View>
+                                            {/* Mini Usage Bar */}
+                                            <View className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                                <View
+                                                    className="h-full bg-cyan-500"
+                                                    style={{ width: `${appProgress * 100}%` }}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+                                );
+                            })
+                        )}
                     </View>
                 </View>
             </ScrollView>

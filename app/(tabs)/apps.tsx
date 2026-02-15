@@ -6,6 +6,7 @@ import { APP_CATEGORIES } from '../../src/utils/constants';
 import { Smartphone, Search } from 'lucide-react-native';
 import { formatTime } from '../../src/utils/formatters';
 import { TextInput } from 'react-native';
+import { AppLimitModal } from '../../src/components/AppLimitModal';
 
 const allFilter = 'All' as const;
 type Filter = typeof allFilter | AppCategory;
@@ -14,6 +15,8 @@ export default function AppsScreen() {
     const { todayApps, allApps, isLoading, loadTodayUsage, loadAllApps } = useUsageStore();
     const [activeFilter, setActiveFilter] = useState<Filter>('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedApp, setSelectedApp] = useState<{ packageName: string, appName: string } | null>(null);
+    const [isModalVisible, setIsModalVisible] = useState(false);
 
     useEffect(() => {
         loadTodayUsage();
@@ -119,7 +122,16 @@ export default function AppsScreen() {
                                                 </View>
                                             </View>
                                         </View>
-                                        <TouchableOpacity className="bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20">
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                setSelectedApp({
+                                                    packageName: app.packageName,
+                                                    appName: app.appName
+                                                });
+                                                setIsModalVisible(true);
+                                            }}
+                                            className="bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20"
+                                        >
                                             <Text className="text-[10px] text-primary font-bold">Manage</Text>
                                         </TouchableOpacity>
                                     </View>
@@ -128,6 +140,15 @@ export default function AppsScreen() {
                         )}
                     </View>
                 </ScrollView>
+
+                <AppLimitModal
+                    isVisible={isModalVisible}
+                    app={selectedApp}
+                    onClose={() => {
+                        setIsModalVisible(false);
+                        setSelectedApp(null);
+                    }}
+                />
             </View>
         </SafeAreaView>
     );
