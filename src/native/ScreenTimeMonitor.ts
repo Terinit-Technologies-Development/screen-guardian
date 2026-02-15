@@ -66,6 +66,16 @@ class ScreenTimeMonitorService {
         }
     }
 
+    async getInstalledApps(): Promise<any[]> {
+        if (!NativeModule) return [];
+        try {
+            return await NativeModule.getInstalledApps();
+        } catch (error) {
+            console.error('Failed to get installed apps:', error);
+            return [];
+        }
+    }
+
     async startMonitoring(): Promise<{ monitoring: boolean }> {
         if (!NativeModule) return { monitoring: false };
         try {
