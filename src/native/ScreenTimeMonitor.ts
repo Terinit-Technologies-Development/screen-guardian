@@ -32,6 +32,26 @@ class ScreenTimeMonitorService {
         }
     }
 
+    async checkAccessibilityPermission(): Promise<AuthorizationResult> {
+        if (!NativeModule) return { authorized: false, status: 'unavailable' };
+        try {
+            return await NativeModule.checkAccessibilityPermission();
+        } catch (error) {
+            console.error('Check accessibility failed:', error);
+            throw error;
+        }
+    }
+
+    async requestAccessibilityPermission(): Promise<AuthorizationResult> {
+        if (!NativeModule) return { authorized: false, status: 'unavailable' };
+        try {
+            return await NativeModule.requestAccessibilityPermission();
+        } catch (error) {
+            console.error('Request accessibility failed:', error);
+            throw error;
+        }
+    }
+
     async getTodayUsage(): Promise<UsageData> {
         if (!NativeModule) throw new Error('Native module unavailable');
         try {

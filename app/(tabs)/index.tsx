@@ -1,6 +1,8 @@
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, AppState } from 'react-native';
 import React, { useEffect } from 'react';
 import { useUsageStore } from '../../src/store/usageStore';
+import { usePermissionStore } from '../../src/store/usePermissionStore';
+import { PermissionPrompt } from '../../src/components/PermissionPrompt';
 import { AppUsageData } from '../../src/types/usage';
 import { formatTime } from '../../src/utils/formatters';
 import { RefreshCw, Smartphone, Eye, Zap } from 'lucide-react-native';
@@ -16,8 +18,20 @@ export default function HomeScreen() {
         isLimitExceeded,
     } = useUsageStore();
 
+    const { checkAllPermissions } = usePermissionStore();
+
     useEffect(() => {
         loadTodayUsage();
+        checkAllPermissions();
+
+        // Check permissions again when app comes to foreground
+        const subscription = AppState.addEventListener('change', (nextAppState) => {
+            if (nextAppState === 'active') {
+                checkAllPermissions();
+            }
+        });
+
+        return () => subscription.remove();
     }, []);
 
     const timeRemaining = Math.max(0, dailyLimit - totalScreenTime);
@@ -26,6 +40,9 @@ export default function HomeScreen() {
     return (
         <SafeAreaView className="flex-1 bg-background">
             <ScrollView className="p-4 space-y-4">
+                {/* Permissions Guidance */}
+                <PermissionPrompt />
+
                 {/* Hero Card Equivalent */}
                 <View className="bg-card p-6 rounded-2xl border border-border relative overflow-hidden">
                     <View className="items-center py-4">

@@ -15,7 +15,32 @@ interface ExtensionData {
     date: string;
 }
 
+interface AuthorizationResult {
+    authorized: boolean;
+    status: 'approved' | 'denied' | 'pending' | 'unavailable';
+}
+
 class AppInterventionService {
+    async checkOverlayPermission(): Promise<AuthorizationResult> {
+        if (!NativeModule) return { authorized: false, status: 'unavailable' };
+        try {
+            return await NativeModule.checkOverlayPermission();
+        } catch (error) {
+            console.error('Check overlay failed:', error);
+            throw error;
+        }
+    }
+
+    async requestOverlayPermission(): Promise<AuthorizationResult> {
+        if (!NativeModule) return { authorized: false, status: 'unavailable' };
+        try {
+            return await NativeModule.requestOverlayPermission();
+        } catch (error) {
+            console.error('Request overlay failed:', error);
+            throw error;
+        }
+    }
+
     async blockApp(packageName: string, message: string = 'Limit reached'): Promise<boolean> {
         if (Platform.OS === 'ios' || !NativeModule) {
             console.warn('Cannot block apps on this platform');
