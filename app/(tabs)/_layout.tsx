@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Smartphone, Home, BarChart2, Settings } from 'lucide-react-native';
+import { Smartphone, Home, BarChart2, Settings, Dumbbell } from 'lucide-react-native';
 
 export default function TabLayout() {
     return (
@@ -30,6 +30,13 @@ export default function TabLayout() {
                 options={{
                     title: 'Progress',
                     tabBarIcon: ({ color }: { color: string }) => <BarChart2 size={24} color={color} />,
+                }}
+            />
+            <Tabs.Screen
+                name="exercises"
+                options={{
+                    title: 'Exercises',
+                    tabBarIcon: ({ color }: { color: string }) => <Dumbbell size={24} color={color} />,
                 }}
             />
             <Tabs.Screen
