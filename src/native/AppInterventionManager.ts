@@ -118,6 +118,28 @@ class AppInterventionService {
         }
     }
 
+    async setDeepFocusState(active: boolean, endTime: number): Promise<boolean> {
+        if (Platform.OS === 'ios' || !NativeModule) return false;
+        try {
+            const result = await NativeModule.setDeepFocusState(active, endTime);
+            return result.success;
+        } catch (error) {
+            console.error('Set Deep Focus failed:', error);
+            throw error;
+        }
+    }
+
+    async setDeepFocusWhitelist(packageNames: string[]): Promise<boolean> {
+        if (Platform.OS === 'ios' || !NativeModule) return false;
+        try {
+            const result = await NativeModule.setDeepFocusWhitelist(packageNames);
+            return result.success;
+        } catch (error) {
+            console.error('Set Deep Focus whitelist failed:', error);
+            throw error;
+        }
+    }
+
     async syncLimits(limits: Record<string, any>): Promise<boolean> {
         if (Platform.OS === 'ios' || !NativeModule) return false;
         try {

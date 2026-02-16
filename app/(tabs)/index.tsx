@@ -3,7 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { useUsageStore } from '../../src/store/usageStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { usePermissionStore } from '../../src/store/usePermissionStore';
+import { useFocusStore } from '../../src/store/focusStore';
 import { PermissionPrompt } from '../../src/components/PermissionPrompt';
+import DeepFocusModal from '../../src/components/DeepFocusModal';
 import { AppUsageData } from '../../src/types/usage';
 import { formatTime } from '../../src/utils/formatters';
 import { RefreshCw, Smartphone, Eye, Zap, LayoutGrid, Clock, ChevronRight, Shield } from 'lucide-react-native';
@@ -36,6 +38,8 @@ export default function HomeScreen() {
 
     const { perAppLimits } = useSettingsStore();
     const { checkAllPermissions } = usePermissionStore();
+    const { isActive: isFocusActive } = useFocusStore();
+    const [showFocusModal, setShowFocusModal] = useState(false);
 
     useEffect(() => {
         const init = async () => {
@@ -134,6 +138,32 @@ export default function HomeScreen() {
                             )}
                         </View>
                     </View>
+                </Animated.View>
+
+                {/* Deep Focus Action */}
+                <Animated.View
+                    entering={FadeInDown.delay(250).springify()}
+                    className="px-4 mb-8"
+                >
+                    <TouchableOpacity
+                        onPress={() => setShowFocusModal(true)}
+                        className={`w-full p-4 rounded-3xl flex-row items-center justify-between ${isFocusActive ? 'bg-indigo-500' : 'bg-[#1a1a1c] border border-white/5'}`}
+                    >
+                        <View className="flex-row items-center gap-4">
+                            <View className={`w-12 h-12 rounded-2xl items-center justify-center ${isFocusActive ? 'bg-white/20' : 'bg-indigo-500/10'}`}>
+                                <Shield size={24} color={isFocusActive ? '#FFF' : '#6366f1'} />
+                            </View>
+                            <View>
+                                <Text className={`font-bold text-lg ${isFocusActive ? 'text-white' : 'text-white'}`}>
+                                    {isFocusActive ? 'Deep Focus Active' : 'Enter Deep Focus'}
+                                </Text>
+                                <Text className={`text-xs ${isFocusActive ? 'text-white/80' : 'text-gray-400'}`}>
+                                    {isFocusActive ? 'Distractions blocked' : 'Block distractions & focus'}
+                                </Text>
+                            </View>
+                        </View>
+                        <ChevronRight size={20} color={isFocusActive ? '#FFF' : '#666'} />
+                    </TouchableOpacity>
                 </Animated.View>
 
                 {/* Permissions Guidance */}
@@ -310,6 +340,8 @@ export default function HomeScreen() {
                 {/* Extra Space for Bottom Tab */}
                 <View className="h-20" />
             </ScrollView>
+
+            <DeepFocusModal visible={showFocusModal} onClose={() => setShowFocusModal(false)} />
         </SafeAreaView>
     );
 }
