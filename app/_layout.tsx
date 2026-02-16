@@ -13,7 +13,6 @@ export default function RootLayout() {
 
     useEffect(() => {
         if (theme) {
-            console.log(`[Theme] Setting color scheme to: ${theme}`);
             setColorScheme(theme);
         }
     }, [theme]);
