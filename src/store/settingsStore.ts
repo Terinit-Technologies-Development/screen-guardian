@@ -13,6 +13,7 @@ interface SettingsState {
   monitoringEnabled: boolean;
   notificationsEnabled: boolean;
   hasCompletedOnboarding: boolean;
+  theme: 'light' | 'dark' | 'system';
 
   setDailyLimit: (seconds: number) => void;
   setAppLimit: (appId: string, limit: Partial<AppLimit>) => void;
@@ -22,6 +23,7 @@ interface SettingsState {
   setExerciseDifficulty: (difficulty: 'easy' | 'medium' | 'hard') => void;
   toggleMonitoring: () => void;
   toggleNotifications: () => void;
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
   completeOnboarding: () => void;
   resetSettings: () => void;
 }
@@ -37,6 +39,7 @@ export const useSettingsStore = create<SettingsState>()(
       monitoringEnabled: true,
       notificationsEnabled: true,
       hasCompletedOnboarding: false,
+      theme: 'dark', // Defaulting to dark as per user preference for other screens
 
       setDailyLimit: (seconds) => set({ dailyScreenTimeLimit: seconds }),
 
@@ -63,6 +66,7 @@ export const useSettingsStore = create<SettingsState>()(
       setExerciseDifficulty: (difficulty) => set({ exerciseDifficulty: difficulty }),
       toggleMonitoring: () => set(s => ({ monitoringEnabled: !s.monitoringEnabled })),
       toggleNotifications: () => set(s => ({ notificationsEnabled: !s.notificationsEnabled })),
+      setTheme: (theme) => set({ theme }),
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
 
       resetSettings: () => set({

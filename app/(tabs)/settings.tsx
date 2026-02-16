@@ -1,111 +1,202 @@
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Switch } from 'react-native';
 import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Switch, AppState } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { formatTime } from '../../src/utils/formatters';
-import { RotateCcw } from 'lucide-react-native';
+import {
+    RotateCcw,
+    Moon,
+    Sun,
+    Monitor,
+    Bell,
+    Shield,
+    Activity,
+    ChevronRight,
+    CircleHelp,
+    Info,
+    Smartphone
+} from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 export default function SettingsScreen() {
     const {
         dailyScreenTimeLimit,
         setDailyLimit,
-        cooldownDuration,
-        setCooldownDuration,
-        maxExtensions,
-        setMaxExtensions,
         exerciseDifficulty,
         setExerciseDifficulty,
         monitoringEnabled,
         toggleMonitoring,
         notificationsEnabled,
         toggleNotifications,
+        theme,
+        setTheme,
         resetSettings,
     } = useSettingsStore();
 
     return (
         <SafeAreaView className="flex-1 bg-background">
-            <ScrollView className="p-4 space-y-4">
-                <Text className="text-2xl font-bold text-foreground mb-4">Settings</Text>
+            <ScrollView
+                className="flex-1"
+                contentContainerStyle={{ paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
+            >
+                <Animated.View entering={FadeInUp.delay(100).duration(500)} className="px-6 pt-6 pb-2">
+                    <Text className="text-3xl font-black text-foreground tracking-tighter">Settings</Text>
+                    <Text className="text-muted-foreground text-sm mt-1">Configure your focus sanctuary</Text>
+                </Animated.View>
 
-                {/* Screen Time Limit Section */}
-                <View className="bg-card border border-border rounded-xl p-4">
-                    <Text className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-4">Daily Limit</Text>
-                    <View className="flex-row justify-between items-center mb-4">
-                        <Text className="text-sm text-muted-foreground">Limit</Text>
-                        <Text className="text-lg font-bold text-cyan-500">{formatTime(dailyScreenTimeLimit)}</Text>
-                    </View>
-                    {/* Slider replacement - Simple buttons for now as RN slider needs extra dep or custom implementation */}
-                    <View className="flex-row gap-2">
-                        {[3600, 7200, 10800, 14400, 18000].map((val: number) => (
+                {/* Appearance Section */}
+                <Section title="Appearance">
+                    <View className="flex-row gap-2 px-1">
+                        {[
+                            { id: 'light', icon: Sun, label: 'Light' },
+                            { id: 'dark', icon: Moon, label: 'Dark' },
+                            { id: 'system', icon: Monitor, label: 'System' }
+                        ].map((item) => (
                             <TouchableOpacity
-                                key={val}
-                                onPress={() => setDailyLimit(val)}
-                                className={`flex-1 py-1 rounded-md items-center border ${dailyScreenTimeLimit === val ? 'bg-cyan-500 border-cyan-500' : 'bg-muted border-border'}`}
+                                key={item.id}
+                                onPress={() => setTheme(item.id as any)}
+                                className={`flex-1 flex-row items-center justify-center py-3 rounded-2xl border ${theme === item.id ? 'bg-cyan-500 border-cyan-500' : 'bg-card border-border'}`}
                             >
-                                <Text className={`text-[10px] ${dailyScreenTimeLimit === val ? 'text-white' : 'text-muted-foreground'}`}>
-                                    {val / 3600}h
+                                <item.icon size={16} color={theme === item.id ? '#FFFFFF' : '#94a3b8'} />
+                                <Text className={`ml-2 text-xs font-bold ${theme === item.id ? 'text-white' : 'text-muted-foreground'}`}>
+                                    {item.label}
                                 </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
-                </View>
+                </Section>
 
-                {/* Toggles */}
-                <View className="bg-card border border-border rounded-xl overflow-hidden">
-                    <View className="flex-row items-center justify-between p-4 border-b border-border">
-                        <View>
-                            <Text className="text-sm font-medium text-foreground">Monitoring</Text>
-                            <Text className="text-xs text-muted-foreground">Track app usage</Text>
+                {/* Focus Controls */}
+                <Section title="Focus Controls">
+                    <SettingItem
+                        icon={Shield}
+                        title="Monitoring"
+                        subtitle="Real-time app usage tracking"
+                        right={<Switch value={monitoringEnabled} onValueChange={toggleMonitoring} trackColor={{ false: "#3f3f46", true: "#06b6d4" }} />}
+                    />
+                    <SettingItem
+                        icon={Bell}
+                        title="Notifications"
+                        subtitle="Alerts for focus budget limits"
+                        right={<Switch value={notificationsEnabled} onValueChange={toggleNotifications} trackColor={{ false: "#3f3f46", true: "#06b6d4" }} />}
+                    />
+                </Section>
+
+                {/* Goals */}
+                <Section title="Daily Goals">
+                    <View className="bg-card border border-border rounded-3xl p-5 mb-4 shadow-sm">
+                        <View className="flex-row justify-between items-center mb-5">
+                            <View className="flex-row items-center">
+                                <Activity size={20} color="#06b6d4" />
+                                <Text className="ml-3 text-base font-bold text-foreground">Screen Time Limit</Text>
+                            </View>
+                            <Text className="text-lg font-black text-cyan-500">{formatTime(dailyScreenTimeLimit)}</Text>
                         </View>
-                        <Switch
-                            value={monitoringEnabled}
-                            onValueChange={toggleMonitoring}
-                            trackColor={{ false: "#3f3f46", true: "#06b6d4" }}
-                        />
-                    </View>
-                    <View className="flex-row items-center justify-between p-4">
-                        <View>
-                            <Text className="text-sm font-medium text-foreground">Notifications</Text>
-                            <Text className="text-xs text-muted-foreground">Limit alerts</Text>
+                        <View className="flex-row gap-1.5">
+                            {[3600, 7200, 10800, 14400, 18000].map((val) => (
+                                <TouchableOpacity
+                                    key={val}
+                                    onPress={() => setDailyLimit(val)}
+                                    className={`flex-1 py-2.5 rounded-xl items-center border ${dailyScreenTimeLimit === val ? 'bg-cyan-500 border-cyan-500' : 'bg-muted/50 border-border'}`}
+                                >
+                                    <Text className={`text-[10px] font-black ${dailyScreenTimeLimit === val ? 'text-white' : 'text-muted-foreground'}`}>
+                                        {val / 3600}H
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
                         </View>
-                        <Switch
-                            value={notificationsEnabled}
-                            onValueChange={toggleNotifications}
-                            trackColor={{ false: "#3f3f46", true: "#06b6d4" }}
-                        />
                     </View>
+                </Section>
+
+                {/* Mindfulness */}
+                <Section title="Mindfulness">
+                    <View className="bg-card border border-border rounded-3xl p-5 shadow-sm">
+                        <Text className="text-sm font-bold text-foreground mb-4">Intervention Difficulty</Text>
+                        <View className="flex-row gap-2">
+                            {(['easy', 'medium', 'hard'] as const).map((d) => (
+                                <TouchableOpacity
+                                    key={d}
+                                    onPress={() => setExerciseDifficulty(d)}
+                                    className={`flex-1 py-3 rounded-2xl items-center border ${exerciseDifficulty === d ? 'bg-foreground border-foreground' : 'bg-muted/50 border-border'}`}
+                                >
+                                    <Text className={`capitalize text-xs font-bold ${exerciseDifficulty === d ? 'text-background' : 'text-muted-foreground'}`}>
+                                        {d}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                        <Text className="text-[10px] text-muted-foreground mt-4 italic">
+                            * Harder difficulty requires more repetitions to access blocked apps.
+                        </Text>
+                    </View>
+                </Section>
+
+                {/* Support & Legal */}
+                <Section title="About">
+                    <TouchableOpacity className="flex-row items-center justify-between p-4 bg-card border border-border rounded-2xl mb-2">
+                        <View className="flex-row items-center">
+                            <CircleHelp size={20} color="#94a3b8" />
+                            <Text className="ml-3 text-sm font-medium text-foreground">Help Center</Text>
+                        </View>
+                        <ChevronRight size={18} color="#475569" />
+                    </TouchableOpacity>
+                    <TouchableOpacity className="flex-row items-center justify-between p-4 bg-card border border-border rounded-2xl mb-2">
+                        <View className="flex-row items-center">
+                            <Info size={20} color="#94a3b8" />
+                            <Text className="ml-3 text-sm font-medium text-foreground">Privacy Policy</Text>
+                        </View>
+                        <ChevronRight size={18} color="#475569" />
+                    </TouchableOpacity>
+                </Section>
+
+                {/* Danger Zone */}
+                <View className="px-6 mt-6">
+                    <TouchableOpacity
+                        onPress={resetSettings}
+                        activeOpacity={0.7}
+                        className="flex-row items-center justify-center gap-2 p-5 rounded-[24px] border border-destructive/20 bg-destructive/5"
+                    >
+                        <RotateCcw size={18} className="text-destructive" />
+                        <Text className="text-destructive font-black text-sm uppercase tracking-widest">Wipe All Config</Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* Exercise Difficulty */}
-                <View className="bg-card border border-border rounded-xl p-4">
-                    <Text className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-4">Exercise Difficulty</Text>
-                    <View className="flex-row gap-2">
-                        {(['easy', 'medium', 'hard'] as const).map((d) => (
-                            <TouchableOpacity
-                                key={d}
-                                onPress={() => setExerciseDifficulty(d)}
-                                className={`flex-1 py-2 rounded-lg items-center border ${exerciseDifficulty === d ? 'bg-primary border-primary' : 'bg-muted border-border'}`}
-                            >
-                                <Text className={`capitalize text-xs font-medium ${exerciseDifficulty === d ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
-                                    {d}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
-
-                {/* Reset All */}
-                <TouchableOpacity
-                    onPress={resetSettings}
-                    className="flex-row items-center justify-center gap-2 p-4 rounded-xl border border-red-500/20 bg-red-500/5 mt-4"
+                <Animated.Text
+                    entering={FadeInDown.delay(500)}
+                    className="text-[10px] text-center text-muted-foreground font-mono uppercase tracking-[4px] mt-12 opacity-50"
                 >
-                    <RotateCcw size={16} color="#ef4444" />
-                    <Text className="text-red-500 font-medium text-sm">Reset All Settings</Text>
-                </TouchableOpacity>
-
-                <Text className="text-[10px] text-center text-muted-foreground font-mono uppercase tracking-widest mt-4">
-                    v1.0.0
-                </Text>
+                    Guardian v1.2.0
+                </Animated.Text>
             </ScrollView>
         </SafeAreaView>
+    );
+}
+
+function Section({ title, children }: { title: string, children: React.ReactNode }) {
+    return (
+        <View className="mt-8 px-6">
+            <Text className="text-[10px] font-black uppercase text-muted-foreground tracking-[3px] mb-4 ml-1">{title}</Text>
+            {children}
+        </View>
+    );
+}
+
+function SettingItem({ icon: Icon, title, subtitle, right }: { icon: any, title: string, subtitle: string, right: React.ReactNode }) {
+    return (
+        <View className="flex-row items-center justify-between p-5 bg-card border border-border rounded-3xl mb-3 shadow-sm">
+            <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 rounded-xl bg-muted/50 items-center justify-center">
+                    <Icon size={20} color="#64748b" />
+                </View>
+                <View className="ml-4 flex-1">
+                    <Text className="text-sm font-bold text-foreground">{title}</Text>
+                    <Text className="text-[10px] text-muted-foreground font-medium">{subtitle}</Text>
+                </View>
+            </View>
+            <View className="ml-4">
+                {right}
+            </View>
+        </View>
     );
 }
