@@ -1,13 +1,21 @@
 import { Tabs } from 'expo-router';
 import { Smartphone, Home, BarChart2, Settings, Dumbbell } from 'lucide-react-native';
+import { useColorScheme } from 'nativewind';
 
 export default function TabLayout() {
+    const { colorScheme } = useColorScheme();
+    const isDark = colorScheme === 'dark';
+
     return (
         <Tabs screenOptions={{
             tabBarActiveTintColor: '#06b6d4',
+            tabBarInactiveTintColor: isDark ? '#525252' : '#a3a3a3',
             tabBarStyle: {
-                backgroundColor: '#0a0a0a',
-                borderTopColor: '#262626',
+                backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
+                borderTopColor: isDark ? '#262626' : '#e5e5e5',
+                height: 64,
+                paddingBottom: 10,
+                paddingTop: 10,
             },
             headerShown: false,
         }}>
@@ -15,35 +23,35 @@ export default function TabLayout() {
                 name="index"
                 options={{
                     title: 'Home',
-                    tabBarIcon: ({ color }: { color: string }) => <Home size={24} color={color} />,
+                    tabBarIcon: ({ color }: { color: string }) => <Home size={22} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="apps"
                 options={{
                     title: 'Apps',
-                    tabBarIcon: ({ color }: { color: string }) => <Smartphone size={24} color={color} />,
+                    tabBarIcon: ({ color }: { color: string }) => <Smartphone size={22} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="progress"
                 options={{
                     title: 'Progress',
-                    tabBarIcon: ({ color }: { color: string }) => <BarChart2 size={24} color={color} />,
+                    tabBarIcon: ({ color }: { color: string }) => <BarChart2 size={22} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="exercises"
                 options={{
                     title: 'Exercises',
-                    tabBarIcon: ({ color }: { color: string }) => <Dumbbell size={24} color={color} />,
+                    tabBarIcon: ({ color }: { color: string }) => <Dumbbell size={22} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="settings"
                 options={{
                     title: 'Settings',
-                    tabBarIcon: ({ color }: { color: string }) => <Settings size={24} color={color} />,
+                    tabBarIcon: ({ color }: { color: string }) => <Settings size={22} color={color} />,
                 }}
             />
         </Tabs>

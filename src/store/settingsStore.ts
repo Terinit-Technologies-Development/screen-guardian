@@ -39,7 +39,7 @@ export const useSettingsStore = create<SettingsState>()(
       monitoringEnabled: true,
       notificationsEnabled: true,
       hasCompletedOnboarding: false,
-      theme: 'dark', // Defaulting to dark as per user preference for other screens
+      theme: 'system',
 
       setDailyLimit: (seconds) => set({ dailyScreenTimeLimit: seconds }),
 

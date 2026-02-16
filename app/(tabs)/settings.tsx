@@ -18,7 +18,10 @@ import {
 } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+import { useColorScheme } from 'nativewind';
+
 export default function SettingsScreen() {
+    const { colorScheme } = useColorScheme();
     const {
         dailyScreenTimeLimit,
         setDailyLimit,
@@ -43,6 +46,13 @@ export default function SettingsScreen() {
                 <Animated.View entering={FadeInUp.delay(100).duration(500)} className="px-6 pt-6 pb-2">
                     <Text className="text-3xl font-black text-foreground tracking-tighter">Settings</Text>
                     <Text className="text-muted-foreground text-sm mt-1">Configure your focus sanctuary</Text>
+
+                    {/* Debug Info */}
+                    <View className="mt-2 p-2 bg-muted/20 rounded-lg border border-border/50">
+                        <Text className="text-[8px] font-mono text-muted-foreground uppercase">
+                            Store: {theme} | NativeWind: {colorScheme}
+                        </Text>
+                    </View>
                 </Animated.View>
 
                 {/* Appearance Section */}
