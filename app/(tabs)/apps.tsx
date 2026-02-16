@@ -132,7 +132,13 @@ export default function AppsScreen() {
                         ) : (
                             <View className="gap-4">
                                 {filteredApps.map((app, index) => {
-                                    const appProgress = totalScreenTime > 0 ? (app.timeInForeground / totalScreenTime) : 0;
+                                    const limit = perAppLimits[app.packageName];
+                                    const hasLimit = limit?.enabled;
+                                    const timeLimitMinutes = limit?.maxTimeMinutes || 0;
+                                    const appProgress = (hasLimit && timeLimitMinutes > 0)
+                                        ? Math.min(1, (app.timeInForeground / (timeLimitMinutes * 60)))
+                                        : (totalScreenTime > 0 ? (app.timeInForeground / totalScreenTime) : 0);
+
                                     return (
                                         <Animated.View
                                             key={app.packageName}
@@ -147,11 +153,11 @@ export default function AppsScreen() {
                                                     });
                                                 }}
                                                 activeOpacity={0.7}
-                                                className={`p-4 rounded-[28px] border ${app.hasLimit ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-card border-border/80 shadow-sm'}`}
+                                                className={`p-4 rounded-[28px] border ${hasLimit ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-card border-border/80 shadow-sm'}`}
                                             >
                                                 <View className="flex-row items-center gap-4">
-                                                    <View className={`w-14 h-14 rounded-2xl items-center justify-center border ${app.hasLimit ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-muted/40 border-border/40'}`}>
-                                                        <Smartphone size={24} color={app.hasLimit ? '#22d3ee' : '#71717a'} />
+                                                    <View className={`w-14 h-14 rounded-2xl items-center justify-center border ${hasLimit ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-muted/40 border-border/40'}`}>
+                                                        <Smartphone size={24} color={hasLimit ? '#22d3ee' : '#71717a'} />
                                                     </View>
                                                     <View className="flex-1">
                                                         <View className="flex-row justify-between items-start mb-1">

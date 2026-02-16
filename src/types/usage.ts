@@ -39,6 +39,7 @@ export interface AppLimit {
   maxTimeMinutes: number;
   category: AppCategory;
   isWhitelisted: boolean;
+  enabled: boolean;
 }
 
 export type AppCategory =

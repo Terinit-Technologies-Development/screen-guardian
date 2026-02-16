@@ -53,7 +53,8 @@ export default function AppDetails() {
                 maxTimeMinutes: parseInt(timeLimit) || 60,
                 maxVisits: parseInt(visitLimit) || 10,
                 category: 'Other',
-                isWhitelisted: false
+                isWhitelisted: false,
+                enabled: true
             });
         } else {
             removeAppLimit(packageName);

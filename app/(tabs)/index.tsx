@@ -162,7 +162,7 @@ export default function HomeScreen() {
                                 if (!limit.enabled) return null;
 
                                 const currentUsage = app?.timeInForeground || 0;
-                                const limitMinutes = limit.dailyTimeLimit || 0;
+                                const limitMinutes = limit.maxTimeMinutes || 0;
                                 const progress = limitMinutes > 0 ? Math.min(100, (currentUsage / (limitMinutes * 60)) * 100) : 0;
                                 const isNearLimit = progress > 80;
 
@@ -251,7 +251,12 @@ export default function HomeScreen() {
                             </View>
                         ) : (
                             todayApps.slice(0, 5).map((app: AppUsageData, index) => {
-                                const appProgress = totalScreenTime > 0 ? (app.timeInForeground / totalScreenTime) : 0;
+                                const limit = perAppLimits[app.packageName];
+                                const hasLimit = limit?.enabled;
+                                const timeLimitMinutes = limit?.maxTimeMinutes || 0;
+                                const appProgress = (hasLimit && timeLimitMinutes > 0)
+                                    ? Math.min(1, (app.timeInForeground / (timeLimitMinutes * 60)))
+                                    : (totalScreenTime > 0 ? (app.timeInForeground / totalScreenTime) : 0);
                                 return (
                                     <TouchableOpacity
                                         key={app.packageName}
@@ -262,10 +267,10 @@ export default function HomeScreen() {
                                             });
                                         }}
                                         activeOpacity={0.7}
-                                        className={`p-4 rounded-[28px] border flex-row items-center gap-4 ${perAppLimits[app.packageName] ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-card border-border/80 shadow-sm'}`}
+                                        className={`p-4 rounded-[28px] border flex-row items-center gap-4 ${hasLimit ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-card border-border/80 shadow-sm'}`}
                                     >
-                                        <View className={`w-14 h-14 rounded-2xl items-center justify-center border ${perAppLimits[app.packageName] ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-muted/40 border-border/40'}`}>
-                                            {perAppLimits[app.packageName] ? (
+                                        <View className={`w-14 h-14 rounded-2xl items-center justify-center border ${hasLimit ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-muted/40 border-border/40'}`} >
+                                            {hasLimit ? (
                                                 <Shield size={22} color="#06b6d4" />
                                             ) : (
                                                 <Smartphone size={22} color="#666" />
