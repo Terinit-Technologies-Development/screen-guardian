@@ -40,6 +40,12 @@ export interface AppLimit {
   category: AppCategory;
   isWhitelisted: boolean;
   enabled: boolean;
+  // Strict Mode Fields
+  createdAt: number;
+  lastUpdatedAt: number;
+  extensionsToday: number;
+  lastExtensionDate: string | null;
+  tempExtensionMinutes?: number;
 }
 
 export type AppCategory =

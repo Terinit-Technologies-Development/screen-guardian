@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Switch, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Switch, Dimensions, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
     ChevronLeft,
@@ -9,12 +9,12 @@ import {
     Sparkles,
     TrendingUp,
     Smartphone,
-    ArrowRight
+    ArrowRight,
+    Lock,
+    Plus
 } from 'lucide-react-native';
 import Animated, {
-    FadeIn,
     FadeInDown,
-    Layout
 } from 'react-native-reanimated';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { useUsageStore } from '../../src/store/usageStore';
@@ -24,7 +24,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function AppDetails() {
     const { packageName } = useLocalSearchParams<{ packageName: string }>();
     const router = useRouter();
-    const { perAppLimits, setAppLimit, removeAppLimit } = useSettingsStore();
+    const { perAppLimits, setAppLimit, removeAppLimit, extendLimit } = useSettingsStore();
     const { todayApps } = useUsageStore();
 
     // Find current app data
@@ -43,23 +43,43 @@ export default function AppDetails() {
         return `${h}h ${m}m`;
     };
 
+    const handleExtension = () => {
+        try {
+            extendLimit(packageName || '', 15);
+            Alert.alert("Success", "Added 15 minutes to your daily budget.");
+        } catch (error: any) {
+            Alert.alert("Extension Failed", error.message);
+        }
+    };
+
     const handleSave = () => {
         if (!packageName) return;
 
-        if (isEnabled) {
-            setAppLimit(packageName, {
-                appId: packageName,
-                appName: appInfo?.appName || 'Unknown App',
-                maxTimeMinutes: parseInt(timeLimit) || 60,
-                maxVisits: parseInt(visitLimit) || 10,
-                category: 'Other',
-                isWhitelisted: false,
-                enabled: true
-            });
-        } else {
-            removeAppLimit(packageName);
+        try {
+            if (isEnabled) {
+                setAppLimit(packageName, {
+                    appId: packageName,
+                    appName: appInfo?.appName || 'Unknown App',
+                    maxTimeMinutes: parseInt(timeLimit) || 60,
+                    maxVisits: parseInt(visitLimit) || 10,
+                    category: 'Other',
+                    isWhitelisted: false,
+                    enabled: true
+                });
+            } else {
+                if (existingLimit && existingLimit.enabled) {
+                    setAppLimit(packageName, { enabled: false });
+                } else {
+                    removeAppLimit(packageName);
+                }
+            }
+            router.back();
+        } catch (error: any) {
+            Alert.alert("Strict Mode Violation", error.message);
+            // Reset state to previous valid state
+            setIsEnabled(!!existingLimit?.enabled);
+            setTimeLimit(existingLimit?.maxTimeMinutes?.toString() || '60');
         }
-        router.back();
     };
 
     return (
@@ -142,6 +162,18 @@ export default function AppDetails() {
                         />
                     </View>
 
+                    {existingLimit && (
+                        <View className="mb-6 bg-orange-500/10 border border-orange-500/20 p-4 rounded-2xl flex-row gap-3">
+                            <Lock size={20} color="#f97316" />
+                            <View className="flex-1">
+                                <Text className="text-orange-500 font-bold text-sm mb-1">Strict Mode Active</Text>
+                                <Text className="text-orange-900/60 text-xs">
+                                    Limit changes are locked for 12 days. Extensions are limited to 3x/day.
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
                     {isEnabled ? (
                         <View className="gap-8">
                             <View>
@@ -167,6 +199,17 @@ export default function AppDetails() {
                                         <Text className="text-muted-foreground font-bold">min/day</Text>
                                     </View>
                                 </View>
+
+                                {/* Emergency Extension */}
+                                {existingLimit && (
+                                    <TouchableOpacity
+                                        onPress={handleExtension}
+                                        className="mt-3 bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-xl flex-row items-center justify-center gap-2"
+                                    >
+                                        <Plus size={16} color="#6366f1" />
+                                        <Text className="text-indigo-500 font-bold text-sm">Add 15m (Max 3x/day)</Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
 
                             <View>
