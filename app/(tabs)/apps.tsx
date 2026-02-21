@@ -134,7 +134,7 @@ export default function AppsScreen() {
                                 {filteredApps.map((app, index) => {
                                     const limit = perAppLimits[app.packageName];
                                     const hasLimit = limit?.enabled;
-                                    const timeLimitMinutes = limit?.maxTimeMinutes || 0;
+                                    const timeLimitMinutes = (limit?.maxTimeMinutes || 0) + (limit?.tempExtensionMinutes || 0);
                                     const appProgress = (hasLimit && timeLimitMinutes > 0)
                                         ? Math.min(1, (app.timeInForeground / (timeLimitMinutes * 60)))
                                         : (totalScreenTime > 0 ? (app.timeInForeground / totalScreenTime) : 0);

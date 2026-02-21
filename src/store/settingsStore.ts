@@ -91,7 +91,14 @@ export const useSettingsStore = create<SettingsState>()(
         const updated = { ...current, [appId]: newLimit };
         set({ perAppLimits: updated });
         // Sync to native for background enforcement
-        AppInterventionManager.syncLimits(updated);
+        const effectiveLimits = Object.entries(updated).reduce((acc, [id, l]) => {
+          acc[id] = {
+            ...l,
+            maxTimeMinutes: l.maxTimeMinutes + (l.tempExtensionMinutes || 0)
+          };
+          return acc;
+        }, {} as Record<string, AppLimit>);
+        AppInterventionManager.syncLimits(effectiveLimits);
       },
 
       extendLimit: (appId: string, minutes: number) => {
@@ -168,7 +175,14 @@ export const useSettingsStore = create<SettingsState>()(
         const { [appId]: _, ...remaining } = get().perAppLimits;
         set({ perAppLimits: remaining });
         // Sync to native for background enforcement
-        AppInterventionManager.syncLimits(remaining);
+        const effectiveLimits = Object.entries(remaining).reduce((acc, [id, l]) => {
+          acc[id] = {
+            ...l,
+            maxTimeMinutes: l.maxTimeMinutes + (l.tempExtensionMinutes || 0)
+          };
+          return acc;
+        }, {} as Record<string, AppLimit>);
+        AppInterventionManager.syncLimits(effectiveLimits);
       },
 
       setCooldownDuration: (seconds) => set({ cooldownDuration: seconds }),

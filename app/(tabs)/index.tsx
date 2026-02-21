@@ -192,7 +192,7 @@ export default function HomeScreen() {
                                 if (!limit.enabled) return null;
 
                                 const currentUsage = app?.timeInForeground || 0;
-                                const limitMinutes = limit.maxTimeMinutes || 0;
+                                const limitMinutes = (limit.maxTimeMinutes || 0) + (limit.tempExtensionMinutes || 0);
                                 const progress = limitMinutes > 0 ? Math.min(100, (currentUsage / (limitMinutes * 60)) * 100) : 0;
                                 const isNearLimit = progress > 80;
 
@@ -283,7 +283,7 @@ export default function HomeScreen() {
                             todayApps.slice(0, 5).map((app: AppUsageData, index) => {
                                 const limit = perAppLimits[app.packageName];
                                 const hasLimit = limit?.enabled;
-                                const timeLimitMinutes = limit?.maxTimeMinutes || 0;
+                                const timeLimitMinutes = (limit?.maxTimeMinutes || 0) + (limit?.tempExtensionMinutes || 0);
                                 const appProgress = (hasLimit && timeLimitMinutes > 0)
                                     ? Math.min(1, (app.timeInForeground / (timeLimitMinutes * 60)))
                                     : (totalScreenTime > 0 ? (app.timeInForeground / totalScreenTime) : 0);

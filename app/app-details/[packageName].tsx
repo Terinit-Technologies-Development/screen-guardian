@@ -184,7 +184,13 @@ export default function AppDetails() {
                                         </View>
                                         <Text className="text-base font-bold text-foreground">Time Budget</Text>
                                     </View>
-                                    <Text className="text-cyan-500 font-bold">{timeLimit}m</Text>
+                                    {existingLimit?.tempExtensionMinutes ? (
+                                        <Text className="text-cyan-500 font-bold">
+                                            {timeLimit}m <Text className="text-indigo-400 text-xs">(+{existingLimit.tempExtensionMinutes}m ext)</Text>
+                                        </Text>
+                                    ) : (
+                                        <Text className="text-cyan-500 font-bold">{timeLimit}m</Text>
+                                    )}
                                 </View>
                                 <View className="bg-card border border-border p-1 rounded-2xl flex-row items-center shadow-sm">
                                     <TextInput
