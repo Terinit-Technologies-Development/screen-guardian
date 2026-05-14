@@ -8,7 +8,10 @@ import { PermissionPrompt } from '../../src/components/PermissionPrompt';
 import DeepFocusModal from '../../src/components/DeepFocusModal';
 import { AppUsageData } from '../../src/types/usage';
 import { formatTime } from '../../src/utils/formatters';
-import { RefreshCw, Smartphone, Eye, Zap, LayoutGrid, Clock, ChevronRight, Shield } from 'lucide-react-native';
+import { RefreshCw, Smartphone, Eye, Zap, LayoutGrid, Clock, ChevronRight, Shield, CheckCircle, Briefcase } from 'lucide-react-native';
+import { format, isToday } from 'date-fns';
+import { useHabitStore } from '../../src/store/habitStore';
+import { useWorkStore } from '../../src/store/workStore';
 import Animated, {
     FadeInDown,
     FadeInUp,
@@ -36,10 +39,17 @@ export default function HomeScreen() {
         startMonitoring,
     } = useUsageStore();
 
-    const { perAppLimits } = useSettingsStore();
+    const { perAppLimits, displayName } = useSettingsStore();
     const { checkAllPermissions } = usePermissionStore();
     const { isActive: isFocusActive } = useFocusStore();
+    
+    const { logs } = useHabitStore();
+    const { history } = useWorkStore();
+    
     const [showFocusModal, setShowFocusModal] = useState(false);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const todayHabitsCompleted = logs[todayStr] ? Object.values(logs[todayStr]).filter(status => status === 'completed').length : 0;
+    const todayWorkSessions = history.filter(session => isToday(session.startTime)).length;
 
     useEffect(() => {
         const init = async () => {
@@ -77,8 +87,10 @@ export default function HomeScreen() {
                     entering={FadeInUp.delay(100).duration(500)}
                     className="px-6 pt-8 pb-4"
                 >
-                    <Text className="text-muted-foreground text-xs font-bold uppercase tracking-[2px] mb-1">Overview</Text>
-                    <Text className="text-3xl font-bold text-foreground tracking-tight">Focus Dashboard</Text>
+                    <Text className="text-muted-foreground text-xs font-bold uppercase tracking-[2px] mb-1">{format(new Date(), 'EEEE, MMMM do')}</Text>
+                    <Text className="text-3xl font-bold text-foreground tracking-tight">
+                        Hello, {displayName || 'Guardian'}
+                    </Text>
                 </Animated.View>
 
                 {/* Hero Card */}
@@ -136,6 +148,32 @@ export default function HomeScreen() {
                                     </View>
                                 </Animated.View>
                             )}
+                        </View>
+                    </View>
+                </Animated.View>
+
+                {/* Productivity Stats */}
+                <Animated.View
+                    entering={FadeInDown.delay(220).springify()}
+                    className="flex-row px-4 gap-4 mb-6"
+                >
+                    <View className="flex-1 bg-card border border-border/80 p-5 rounded-3xl flex-row items-center gap-4 shadow-sm">
+                        <View className="w-10 h-10 bg-emerald-500/10 rounded-2xl items-center justify-center">
+                            <CheckCircle size={20} color="#10b981" />
+                        </View>
+                        <View>
+                            <Text className="text-xl font-bold text-foreground">{todayHabitsCompleted}</Text>
+                            <Text className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Habits Done</Text>
+                        </View>
+                    </View>
+
+                    <View className="flex-1 bg-card border border-border/80 p-5 rounded-3xl flex-row items-center gap-4 shadow-sm">
+                        <View className="w-10 h-10 bg-blue-500/10 rounded-2xl items-center justify-center">
+                            <Briefcase size={20} color="#3b82f6" />
+                        </View>
+                        <View>
+                            <Text className="text-xl font-bold text-foreground">{todayWorkSessions}</Text>
+                            <Text className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Work Sessions</Text>
                         </View>
                     </View>
                 </Animated.View>
