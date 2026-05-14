@@ -34,17 +34,17 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="progress"
+                name="habits"
                 options={{
-                    title: 'Progress',
-                    tabBarIcon: ({ color }: { color: string }) => <BarChart2 size={22} color={color} />,
+                    title: 'Habits',
+                    tabBarIcon: ({ color }: { color: string }) => <Dumbbell size={22} color={color} />,
                 }}
             />
             <Tabs.Screen
-                name="exercises"
+                name="work"
                 options={{
-                    title: 'Exercises',
-                    tabBarIcon: ({ color }: { color: string }) => <Dumbbell size={22} color={color} />,
+                    title: 'Work',
+                    tabBarIcon: ({ color }: { color: string }) => <BarChart2 size={22} color={color} />,
                 }}
             />
             <Tabs.Screen
