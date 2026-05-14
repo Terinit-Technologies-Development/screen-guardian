@@ -28,6 +28,12 @@ interface SettingsState {
   completeOnboarding: () => void;
   checkDailyReset: () => void;
   resetSettings: () => void;
+
+  // Profile & Sync Settings
+  displayName: string;
+  setDisplayName: (name: string) => void;
+  syncEnabled: boolean;
+  setSyncEnabled: (enabled: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -42,6 +48,8 @@ export const useSettingsStore = create<SettingsState>()(
       notificationsEnabled: true,
       hasCompletedOnboarding: false,
       theme: 'system',
+      displayName: 'Guardian User',
+      syncEnabled: false,
 
       setDailyLimit: (seconds) => set({ dailyScreenTimeLimit: seconds }),
 
@@ -121,28 +129,6 @@ export const useSettingsStore = create<SettingsState>()(
           throw new Error("Strict Limit: Extensions cannot exceed 30 minutes.");
         }
 
-        // Apply temporary extension by modifying the base limit? 
-        // NO, because that triggers the 12-day lock. 
-        // implementation_plan says: "We will store tempExtensionMinutes... sync sum to native".
-        // BUT, to keep it simple and given the user request "max 3 time additions", 
-        // we can just update maxTimeMinutes but BYPASS the 12-day check for this specific action?
-        // NO, that violates the "Actual time limit changed once every 12 days" rule.
-        // The "Actual time limit" is the BASE. 
-        // So we DO need a temp field. 
-
-        // Actually, let's just update maxTimeMinutes directly but flag it as an extension?
-        // If we update maxTimeMinutes, it persists forever. That's probably not an "addition" in the user's mind (temporary).
-        // User said: "maximum of 3 time additions in a day". This implies they expire.
-        // So I should ADD a `tempExtensionMinutes` field to AppLimit in store, 
-        // AND update `syncLimits` to send (base + temp) to native.
-
-        // RE-READING PLAN: "We will store tempExtensionMinutes... reset daily".
-        // I missed adding `tempExtensionMinutes` to AppLimit type. 
-        // Let's assume I can add it now dynamically or I need to go back and add it to `types/usage.ts`.
-        // I will add it to `types/usage.ts` in the next step. 
-
-        // For now, I will write the placeholder logic assuming the field exists or I add it to the spread.
-
         const newExtensionCount = extensionsToday + 1;
 
         const updatedLimit = {
@@ -156,10 +142,6 @@ export const useSettingsStore = create<SettingsState>()(
         set({ perAppLimits: updated });
 
         // Native needs the EFFECTIVE limit
-        const nativeLimits = { ...updated };
-        // We need to map this to what native expects. 
-        // Native expects `maxTimeMinutes`. 
-        // We should construct a purely effective object for native sync.
         const effectiveLimits = Object.entries(updated).reduce((acc, [id, l]) => {
           acc[id] = {
             ...l,
@@ -192,6 +174,8 @@ export const useSettingsStore = create<SettingsState>()(
       toggleNotifications: () => set(s => ({ notificationsEnabled: !s.notificationsEnabled })),
       setTheme: (theme) => set({ theme }),
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
+      setDisplayName: (name) => set({ displayName: name }),
+      setSyncEnabled: (enabled) => set({ syncEnabled: enabled }),
 
       checkDailyReset: () => {
         const state = get();
@@ -235,6 +219,8 @@ export const useSettingsStore = create<SettingsState>()(
         exerciseDifficulty: 'medium',
         monitoringEnabled: true,
         notificationsEnabled: true,
+        displayName: 'Guardian User',
+        syncEnabled: false,
       }),
     }),
     {
