@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, AppState, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, AppState, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useState } from 'react';
 import { useUsageStore } from '../../src/store/usageStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
@@ -76,7 +77,7 @@ export default function HomeScreen() {
     const usedPercentage = dailyLimit > 0 ? Math.min(100, (totalScreenTime / dailyLimit) * 100) : 0;
 
     return (
-        <SafeAreaView className="flex-1 bg-background">
+        <SafeAreaView className="flex-1 bg-background" edges={['top']}>
             <ScrollView
                 className="flex-1"
                 contentContainerStyle={{ paddingBottom: 100 }}

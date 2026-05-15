@@ -7,6 +7,8 @@ import '../src/global.css';
 
 import { View } from 'react-native';
 
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 export default function RootLayout() {
     const theme = useSettingsStore((s: any) => s.theme);
     const { colorScheme, setColorScheme } = useColorScheme();
@@ -18,12 +20,13 @@ export default function RootLayout() {
     }, [theme]);
 
     return (
-        <View style={{ flex: 1 }} className={colorScheme === 'dark' ? 'dark' : ''}>
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-            <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="onboarding" options={{ presentation: 'modal' }} />
-            </Stack>
-        </View>
+        <SafeAreaProvider>
+            <View style={{ flex: 1 }} className={colorScheme === 'dark' ? 'dark' : ''}>
+                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+                <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                </Stack>
+            </View>
+        </SafeAreaProvider>
     );
 }

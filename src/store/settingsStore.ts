@@ -3,6 +3,31 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppLimit } from '../types/usage';
 import AppInterventionManager from '../native/AppInterventionManager';
+import { supabase } from '../lib/supabase';
+
+// Helper to sync settings to cloud
+const syncSettingsToCloud = async (state: SettingsState) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user && state.syncEnabled) {
+      await supabase.from('user_settings').upsert({
+        user_id: session.user.id,
+        daily_screen_time_limit: state.dailyScreenTimeLimit,
+        cooldown_duration: state.cooldownDuration,
+        max_extensions: state.maxExtensions,
+        exercise_difficulty: state.exerciseDifficulty,
+        monitoring_enabled: state.monitoringEnabled,
+        notifications_enabled: state.notificationsEnabled,
+        theme: state.theme,
+        display_name: state.displayName,
+        sync_enabled: state.syncEnabled,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+    }
+  } catch (e) {
+    console.error('Failed to sync settings to cloud:', e);
+  }
+};
 
 interface SettingsState {
   dailyScreenTimeLimit: number;
@@ -51,7 +76,7 @@ export const useSettingsStore = create<SettingsState>()(
       displayName: 'Guardian User',
       syncEnabled: false,
 
-      setDailyLimit: (seconds) => set({ dailyScreenTimeLimit: seconds }),
+      setDailyLimit: (seconds) => { set({ dailyScreenTimeLimit: seconds }); syncSettingsToCloud(get()); },
 
       setAppLimit: (appId, limit) => {
         const current = get().perAppLimits;
@@ -167,15 +192,15 @@ export const useSettingsStore = create<SettingsState>()(
         AppInterventionManager.syncLimits(effectiveLimits);
       },
 
-      setCooldownDuration: (seconds) => set({ cooldownDuration: seconds }),
-      setMaxExtensions: (count) => set({ maxExtensions: count }),
-      setExerciseDifficulty: (difficulty) => set({ exerciseDifficulty: difficulty }),
-      toggleMonitoring: () => set(s => ({ monitoringEnabled: !s.monitoringEnabled })),
-      toggleNotifications: () => set(s => ({ notificationsEnabled: !s.notificationsEnabled })),
-      setTheme: (theme) => set({ theme }),
+      setCooldownDuration: (seconds) => { set({ cooldownDuration: seconds }); syncSettingsToCloud(get()); },
+      setMaxExtensions: (count) => { set({ maxExtensions: count }); syncSettingsToCloud(get()); },
+      setExerciseDifficulty: (difficulty) => { set({ exerciseDifficulty: difficulty }); syncSettingsToCloud(get()); },
+      toggleMonitoring: () => { set(s => ({ monitoringEnabled: !s.monitoringEnabled })); syncSettingsToCloud(get()); },
+      toggleNotifications: () => { set(s => ({ notificationsEnabled: !s.notificationsEnabled })); syncSettingsToCloud(get()); },
+      setTheme: (theme) => { set({ theme }); syncSettingsToCloud(get()); },
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
-      setDisplayName: (name) => set({ displayName: name }),
-      setSyncEnabled: (enabled) => set({ syncEnabled: enabled }),
+      setDisplayName: (name) => { set({ displayName: name }); syncSettingsToCloud(get()); },
+      setSyncEnabled: (enabled) => { set({ syncEnabled: enabled }); syncSettingsToCloud(get()); },
 
       checkDailyReset: () => {
         const state = get();
@@ -211,17 +236,20 @@ export const useSettingsStore = create<SettingsState>()(
         }
       },
 
-      resetSettings: () => set({
-        dailyScreenTimeLimit: 7200,
-        perAppLimits: {},
-        cooldownDuration: 1800,
-        maxExtensions: 3,
-        exerciseDifficulty: 'medium',
-        monitoringEnabled: true,
-        notificationsEnabled: true,
-        displayName: 'Guardian User',
-        syncEnabled: false,
-      }),
+      resetSettings: () => {
+        set({
+          dailyScreenTimeLimit: 7200,
+          perAppLimits: {},
+          cooldownDuration: 1800,
+          maxExtensions: 3,
+          exerciseDifficulty: 'medium',
+          monitoringEnabled: true,
+          notificationsEnabled: true,
+          displayName: 'Guardian User',
+          syncEnabled: false,
+        });
+        syncSettingsToCloud(get());
+      },
     }),
     {
       name: 'screen-time-settings',

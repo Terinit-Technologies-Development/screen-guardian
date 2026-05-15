@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Switch, Dimensions, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
     ChevronLeft,
@@ -83,7 +84,7 @@ export default function AppDetails() {
     };
 
     return (
-        <View className="flex-1 bg-background pt-14">
+        <SafeAreaView className="flex-1 bg-background">
             {/* Header */}
             <View className="px-6 flex-row items-center justify-between mb-8">
                 <TouchableOpacity

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useUsageStore } from '../../src/store/usageStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
@@ -47,7 +48,7 @@ export default function AppsScreen() {
     });
 
     return (
-        <SafeAreaView className="flex-1 bg-background">
+        <SafeAreaView className="flex-1 bg-background" edges={['top']}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 className="flex-1"

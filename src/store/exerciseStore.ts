@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ExerciseSession, ExerciseStats } from '../types/exercise';
+import { supabase } from '../lib/supabase';
 
 interface ExerciseState {
   completedSessions: ExerciseSession[];
@@ -22,7 +23,7 @@ export const useExerciseStore = create<ExerciseState>()(
         completionRate: 100,
       },
 
-      addSession: (session) => {
+      addSession: async (session) => {
         set(state => {
           const sessions = [session, ...state.completedSessions];
           return {
@@ -36,6 +37,21 @@ export const useExerciseStore = create<ExerciseState>()(
             },
           };
         });
+
+        try {
+          const { data: { session: authSession } } = await supabase.auth.getSession();
+          if (authSession?.user) {
+            await supabase.from('exercise_sessions').insert({
+              id: session.id,
+              user_id: authSession.user.id,
+              exercise_id: session.exerciseId,
+              duration_seconds: session.durationSeconds,
+              completed_at: new Date(session.completedAt).toISOString()
+            });
+          }
+        } catch (e) {
+          console.error('Failed to sync exercise session to cloud:', e);
+        }
       },
 
       getRecentSessions: (count = 10) => {

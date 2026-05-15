@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { useHabitStore } from '../../src/store/habitStore';
@@ -81,8 +82,8 @@ export default function HabitsScreen() {
     const habitsToQuit = habits.filter(h => h.type === 'quit');
 
     return (
-        <View className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-neutral-50'}`}>
-            <View className={`px-6 pt-14 pb-4 ${isDark ? 'bg-neutral-950' : 'bg-white'} border-b ${isDark ? 'border-neutral-900' : 'border-neutral-200'} flex-row justify-between items-center`}>
+        <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-neutral-50'}`} edges={['top']}>
+            <View className={`px-6 pt-6 pb-4 ${isDark ? 'bg-neutral-950' : 'bg-white'} border-b ${isDark ? 'border-neutral-900' : 'border-neutral-200'} flex-row justify-between items-center`}>
                 <View>
                     <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-neutral-900'}`}>Habits</Text>
                     <Text className={`text-sm font-semibold mt-1 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{format(new Date(), 'EEEE, MMMM do')}</Text>
@@ -122,6 +123,6 @@ export default function HabitsScreen() {
                     </>
                 )}
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }

@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Habit, HabitLog, HabitLogStatus } from '../types/habits';
 import * as Crypto from 'expo-crypto';
+import { supabase } from '../lib/supabase';
 
 interface HabitState {
     habits: Habit[];
@@ -24,7 +25,7 @@ export const useHabitStore = create<HabitState>()(
             logs: {},
             isLoading: false,
 
-            addHabit: (habit) => {
+            addHabit: async (habit) => {
                 const newHabit: Habit = {
                     ...habit,
                     id: Crypto.randomUUID(),
@@ -34,17 +35,58 @@ export const useHabitStore = create<HabitState>()(
                 set(state => ({
                     habits: [...state.habits, newHabit],
                 }));
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user) {
+                        await supabase.from('habits').insert({
+                            id: newHabit.id,
+                            user_id: session.user.id,
+                            title: newHabit.title,
+                            description: newHabit.description,
+                            type: newHabit.type,
+                            frequency: newHabit.frequency,
+                            icon: newHabit.icon,
+                            color: newHabit.color,
+                            is_screen_time_linked: newHabit.isScreenTimeLinked,
+                            created_at: new Date(newHabit.createdAt).toISOString()
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to sync habit to cloud:', e);
+                }
             },
 
-            updateHabit: (id, updates) => {
+            updateHabit: async (id, updates) => {
                 set(state => ({
                     habits: state.habits.map(h => 
                         h.id === id ? { ...h, ...updates } : h
                     ),
                 }));
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user) {
+                        const dbUpdates: any = {};
+                        if (updates.title !== undefined) dbUpdates.title = updates.title;
+                        if (updates.description !== undefined) dbUpdates.description = updates.description;
+                        if (updates.type !== undefined) dbUpdates.type = updates.type;
+                        if (updates.frequency !== undefined) dbUpdates.frequency = updates.frequency;
+                        if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
+                        if (updates.color !== undefined) dbUpdates.color = updates.color;
+                        if (updates.isScreenTimeLinked !== undefined) dbUpdates.is_screen_time_linked = updates.isScreenTimeLinked;
+
+                        await supabase.from('habits')
+                            .update(dbUpdates)
+                            .eq('id', id)
+                            .eq('user_id', session.user.id);
+                    }
+                } catch (e) {
+                    console.error('Failed to sync habit update to cloud:', e);
+                }
             },
 
-            removeHabit: (id) => {
+            removeHabit: async (id) => {
                 set(state => {
                     const newLogs = { ...state.logs };
                     // Clean up logs for this habit
@@ -59,9 +101,21 @@ export const useHabitStore = create<HabitState>()(
                         logs: newLogs,
                     };
                 });
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user) {
+                        await supabase.from('habits')
+                            .delete()
+                            .eq('id', id)
+                            .eq('user_id', session.user.id);
+                    }
+                } catch (e) {
+                    console.error('Failed to delete habit from cloud:', e);
+                }
             },
 
-            logHabit: (habitId, date, status, notes) => {
+            logHabit: async (habitId, date, status, notes) => {
                 const key = `${habitId}_${date}`;
                 const newLog: HabitLog = {
                     id: Crypto.randomUUID(),
@@ -78,6 +132,23 @@ export const useHabitStore = create<HabitState>()(
                         [key]: newLog,
                     }
                 }));
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user) {
+                        await supabase.from('habit_logs').upsert({
+                            id: newLog.id,
+                            user_id: session.user.id,
+                            habit_id: newLog.habitId,
+                            log_date: newLog.logDate,
+                            status: newLog.status,
+                            notes: newLog.notes,
+                            logged_at: new Date(newLog.loggedAt).toISOString()
+                        }, { onConflict: 'habit_id,log_date' });
+                    }
+                } catch (e) {
+                    console.error('Failed to sync habit log to cloud:', e);
+                }
             },
 
             getHabitStreak: (habitId) => {

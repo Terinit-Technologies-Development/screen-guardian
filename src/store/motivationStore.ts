@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Motivation } from '../types/motivations';
 import * as Crypto from 'expo-crypto';
+import { supabase } from '../lib/supabase';
 
 interface MotivationState {
     motivations: Motivation[];
@@ -21,7 +22,7 @@ export const useMotivationStore = create<MotivationState>()(
             motivations: [],
             isLoading: false,
 
-            addMotivation: (motivation) => {
+            addMotivation: async (motivation) => {
                 const newMotivation: Motivation = {
                     ...motivation,
                     id: Crypto.randomUUID(),
@@ -32,23 +33,70 @@ export const useMotivationStore = create<MotivationState>()(
                 set(state => ({
                     motivations: [...state.motivations, newMotivation],
                 }));
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user) {
+                        await supabase.from('motivations').insert({
+                            id: newMotivation.id,
+                            user_id: session.user.id,
+                            title: newMotivation.title,
+                            description: newMotivation.description,
+                            image_url: newMotivation.imageUrl,
+                            display_order: newMotivation.displayOrder,
+                            created_at: new Date(newMotivation.createdAt).toISOString()
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to sync motivation to cloud:', e);
+                }
             },
 
-            updateMotivation: (id, updates) => {
+            updateMotivation: async (id, updates) => {
                 set(state => ({
                     motivations: state.motivations.map(m => 
                         m.id === id ? { ...m, ...updates } : m
                     ),
                 }));
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user) {
+                        const dbUpdates: any = { updated_at: new Date().toISOString() };
+                        if (updates.title !== undefined) dbUpdates.title = updates.title;
+                        if (updates.description !== undefined) dbUpdates.description = updates.description;
+                        if (updates.imageUrl !== undefined) dbUpdates.image_url = updates.imageUrl;
+                        if (updates.displayOrder !== undefined) dbUpdates.display_order = updates.displayOrder;
+
+                        await supabase.from('motivations')
+                            .update(dbUpdates)
+                            .eq('id', id)
+                            .eq('user_id', session.user.id);
+                    }
+                } catch (e) {
+                    console.error('Failed to sync motivation update to cloud:', e);
+                }
             },
 
-            removeMotivation: (id) => {
+            removeMotivation: async (id) => {
                 set(state => ({
                     motivations: state.motivations.filter(m => m.id !== id),
                 }));
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user) {
+                        await supabase.from('motivations')
+                            .delete()
+                            .eq('id', id)
+                            .eq('user_id', session.user.id);
+                    }
+                } catch (e) {
+                    console.error('Failed to delete motivation from cloud:', e);
+                }
             },
 
-            reorderMotivations: (orderedIds) => {
+            reorderMotivations: async (orderedIds) => {
                 set(state => {
                     const orderedMotivations = orderedIds.map((id, index) => {
                         const m = state.motivations.find(m => m.id === id)!;
@@ -57,6 +105,25 @@ export const useMotivationStore = create<MotivationState>()(
                     
                     return { motivations: orderedMotivations };
                 });
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user) {
+                        const { motivations } = get();
+                        // Upsert or bulk update
+                        const updates = motivations.map(m => ({
+                            id: m.id,
+                            user_id: session.user.id,
+                            title: m.title,
+                            description: m.description,
+                            image_url: m.imageUrl,
+                            display_order: m.displayOrder,
+                        }));
+                        await supabase.from('motivations').upsert(updates, { onConflict: 'id' });
+                    }
+                } catch (e) {
+                    console.error('Failed to sync reordered motivations to cloud:', e);
+                }
             },
         }),
         {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
 import { useWorkStore } from '../../src/store/workStore';
 import { Play, Square, Briefcase, Clock, FileText } from 'lucide-react-native';
@@ -80,8 +81,8 @@ export default function WorkScreen() {
     };
 
     return (
-        <View className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-neutral-50'}`}>
-            <View className={`px-6 pt-14 pb-4 ${isDark ? 'bg-neutral-950' : 'bg-white'} border-b ${isDark ? 'border-neutral-900' : 'border-neutral-200'}`}>
+        <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-neutral-50'}`} edges={['top']}>
+            <View className={`px-6 pt-6 pb-4 ${isDark ? 'bg-neutral-950' : 'bg-white'} border-b ${isDark ? 'border-neutral-900' : 'border-neutral-200'}`}>
                 <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-neutral-900'}`}>Work</Text>
             </View>
 
@@ -218,6 +219,6 @@ export default function WorkScreen() {
                 
                 <View className="h-10" />
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }

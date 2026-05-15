@@ -2,9 +2,12 @@ import { Tabs } from 'expo-router';
 import { Smartphone, Home, BarChart2, Settings, Dumbbell } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function TabLayout() {
     const { colorScheme } = useColorScheme();
     const isDark = colorScheme === 'dark';
+    const insets = useSafeAreaInsets();
 
     return (
         <Tabs screenOptions={{
@@ -13,9 +16,8 @@ export default function TabLayout() {
             tabBarStyle: {
                 backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
                 borderTopColor: isDark ? '#262626' : '#e5e5e5',
-                height: 64,
-                paddingBottom: 10,
-                paddingTop: 10,
+                height: 50 + insets.bottom,
+                paddingBottom: insets.bottom > 0 ? insets.bottom : 5,
             },
             headerShown: false,
         }}>
