@@ -196,8 +196,8 @@ export const useUsageStore = create<UsageState>()(
             app_id: app.packageName,
             app_name: app.appName,
             snapshot_date: today,
-            usage_seconds: app.timeInForeground,
-            launch_count: app.launchCount ?? 0,
+            usage_seconds: Math.round(app.timeInForeground),
+            launch_count: Math.round(app.launchCount ?? 0),
             device_id: Platform.OS === 'android' ? 'android-device' : null,
             synced_at: new Date().toISOString(),
           }));
@@ -223,8 +223,8 @@ export const useUsageStore = create<UsageState>()(
           await supabase.from('daily_screen_time_logs').upsert({
             user_id: session.user.id,
             log_date: today,
-            total_seconds: totalSeconds,
-            limit_seconds: limitSeconds ?? get().dailyLimit,
+            total_seconds: Math.round(totalSeconds),
+            limit_seconds: Math.round(limitSeconds ?? get().dailyLimit),
             updated_at: new Date().toISOString(),
           }, { onConflict: 'user_id,log_date' });
         } catch (e) {
