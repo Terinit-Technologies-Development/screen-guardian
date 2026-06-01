@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
-import { AppClassification, FunctionalCategory, WellbeingEffects, WellbeingState } from '../types/wellbeing';
+import { AppClassification, calculateAppStateEffects, FunctionalCategory, WellbeingEffects, WellbeingState } from '../types/wellbeing';
 
 const defaultEffects: WellbeingEffects = {
   screenTime: -1,
@@ -74,9 +74,13 @@ export const useWellbeingStore = create<WellbeingStore>()(
           isDoomscrollRisk: updates.isDoomscrollRisk ?? current?.isDoomscrollRisk ?? false,
           heightenedRestriction: updates.heightenedRestriction ?? current?.heightenedRestriction ?? false,
           dailyTargetMinutes: updates.dailyTargetMinutes ?? current?.dailyTargetMinutes,
-          stateEffects: updates.stateEffects ?? current?.stateEffects,
+          stateEffects: undefined,
           updatedAt: now,
         };
+
+        next.stateEffects = Object.fromEntries(
+          get().states.map(state => [state.id, calculateAppStateEffects(next, state)])
+        );
 
         set(state => ({ classifications: { ...state.classifications, [appId]: next } }));
 

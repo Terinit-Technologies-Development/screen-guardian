@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Switch, Dimensions, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,7 +16,8 @@ import {
     Gamepad2,
     MessageCircle,
     AlertTriangle,
-    SlidersHorizontal
+    SlidersHorizontal,
+    CheckCircle
 } from 'lucide-react-native';
 import Animated, {
     FadeInDown,
@@ -24,7 +25,7 @@ import Animated, {
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { useUsageStore } from '../../src/store/usageStore';
 import { useWellbeingStore } from '../../src/store/wellbeingStore';
-import { FunctionalCategory } from '../../src/types/wellbeing';
+import { calculateAppStateEffects, FunctionalCategory, isAppClassificationComplete } from '../../src/types/wellbeing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -40,6 +41,7 @@ export default function AppDetails() {
     const existingLimit = perAppLimits[packageName as string];
     const classification = classifications[packageName as string];
     const activeState = states.find(s => s.isActive) ?? states[0];
+    const isConfigured = isAppClassificationComplete(classification);
 
     const [isEnabled, setIsEnabled] = useState(!!existingLimit);
     const [timeLimit, setTimeLimit] = useState(existingLimit?.maxTimeMinutes?.toString() || '60');
@@ -50,9 +52,7 @@ export default function AppDetails() {
     const [isDoomscrollRisk, setIsDoomscrollRisk] = useState(!!classification?.isDoomscrollRisk);
     const [heightenedRestriction, setHeightenedRestriction] = useState(!!classification?.heightenedRestriction);
     const [dailyTargetMinutes, setDailyTargetMinutes] = useState(classification?.dailyTargetMinutes?.toString() ?? '30');
-    const stateOverride = classification?.stateEffects?.[activeState?.id ?? ''] ?? {};
-    const [stateSocialEffect, setStateSocialEffect] = useState((stateOverride.social ?? activeState?.effects.social ?? -0.8).toString());
-    const [stateGamingEffect, setStateGamingEffect] = useState((stateOverride.gaming ?? activeState?.effects.gaming ?? 0.4).toString());
+    const calculatedEffects = calculateAppStateEffects({ category, isGame, isMessaging, isDoomscrollRisk, heightenedRestriction }, activeState);
 
     // Stats
     const formatTime = (minutes: number) => {
@@ -100,13 +100,6 @@ export default function AppDetails() {
                 isDoomscrollRisk,
                 heightenedRestriction,
                 dailyTargetMinutes: Math.max(0, parseInt(dailyTargetMinutes, 10) || 0) || undefined,
-                stateEffects: activeState ? {
-                    ...(classification?.stateEffects ?? {}),
-                    [activeState.id]: {
-                        social: Number(stateSocialEffect),
-                        gaming: Number(stateGamingEffect),
-                    },
-                } : classification?.stateEffects,
             });
             router.back();
         } catch (error: any) {
@@ -146,6 +139,12 @@ export default function AppDetails() {
                     <Text className="text-muted-foreground text-sm font-medium">
                         {packageName}
                     </Text>
+                    {isConfigured && (
+                        <View className="mt-4 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex-row items-center gap-2">
+                            <CheckCircle size={14} color="#10b981" />
+                            <Text className="text-xs font-black text-emerald-600 uppercase tracking-wider">Configured</Text>
+                        </View>
+                    )}
                 </Animated.View>
 
                 {/* Growth/Usage Insights */}
@@ -197,6 +196,7 @@ export default function AppDetails() {
                                 ['messaging', 'Messaging'],
                                 ['social', 'Social'],
                                 ['productive', 'Productive'],
+                                ['reading', 'Reading'],
                             ] as [FunctionalCategory, string][]).map(([id, label]) => (
                                 <TouchableOpacity key={id} onPress={() => setCategory(id)} className={`px-3 py-2 rounded-xl border ${category === id ? 'bg-cyan-500 border-cyan-500' : 'border-border bg-background'}`}>
                                     <Text className={`text-xs font-black ${category === id ? 'text-white' : 'text-muted-foreground'}`}>{label}</Text>
@@ -221,17 +221,15 @@ export default function AppDetails() {
 
                         {activeState && (
                             <View className="mt-5 p-4 rounded-2xl bg-muted/30 border border-border">
-                                <Text className="text-sm font-black text-foreground">{activeState.label} effect overrides</Text>
-                                <Text className="text-[10px] text-muted-foreground mt-1 mb-3">Customize how this app affects the active state.</Text>
-                                <View className="flex-row gap-3">
-                                    <View className="flex-1">
-                                        <Text className="text-[10px] font-bold text-muted-foreground mb-1">Gaming</Text>
-                                        <TextInput className="p-3 rounded-xl bg-background border border-border text-foreground font-bold" value={stateGamingEffect} onChangeText={setStateGamingEffect} keyboardType="numbers-and-punctuation" />
-                                    </View>
-                                    <View className="flex-1">
-                                        <Text className="text-[10px] font-bold text-muted-foreground mb-1">Social</Text>
-                                        <TextInput className="p-3 rounded-xl bg-background border border-border text-foreground font-bold" value={stateSocialEffect} onChangeText={setStateSocialEffect} keyboardType="numbers-and-punctuation" />
-                                    </View>
+                                <Text className="text-sm font-black text-foreground">{activeState.label} calculated effects</Text>
+                                <Text className="text-[10px] text-muted-foreground mt-1 mb-3">Derived automatically from this app's category and risk flags.</Text>
+                                <View className="flex-row flex-wrap gap-2">
+                                    {Object.entries(calculatedEffects).map(([key, value]) => (
+                                        <View key={key} className="px-3 py-2 rounded-xl bg-background border border-border">
+                                            <Text className="text-[10px] font-bold text-muted-foreground uppercase">{key}</Text>
+                                            <Text className={`text-sm font-black ${(value ?? 0) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>{(value ?? 0).toFixed(2)}</Text>
+                                        </View>
+                                    ))}
                                 </View>
                             </View>
                         )}

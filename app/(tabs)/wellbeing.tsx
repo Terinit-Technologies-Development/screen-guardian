@@ -4,13 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { format, isToday } from 'date-fns';
-import { BookOpen, Gamepad2, MessageCircle, AlertTriangle, Briefcase, SlidersHorizontal, Plus, Minus, Smartphone, ChevronRight } from 'lucide-react-native';
+import { BookOpen, Gamepad2, MessageCircle, AlertTriangle, Briefcase, SlidersHorizontal, Plus, Minus, Smartphone, ChevronRight, CheckCircle } from 'lucide-react-native';
 import { useUsageStore } from '../../src/store/usageStore';
 import { useReadingStore } from '../../src/store/readingStore';
 import { useWellbeingStore } from '../../src/store/wellbeingStore';
 import { useWorkStore } from '../../src/store/workStore';
 import { formatTime } from '../../src/utils/formatters';
-import { WellbeingEffects } from '../../src/types/wellbeing';
+import { calculateAppStateScoreWeight, isAppClassificationComplete, WellbeingEffects } from '../../src/types/wellbeing';
 
 export default function WellbeingScreen() {
   const { colorScheme } = useColorScheme();
@@ -69,15 +69,16 @@ export default function WellbeingScreen() {
     };
   }, [appRows, reading.durationSeconds, todayWorkSeconds]);
 
+  const appScore = appRows.reduce((sum, app) => (
+    sum + (app.timeInForeground / 60) * calculateAppStateScoreWeight(app.classification, activeState)
+  ), 0);
   const score = Math.round(
-    (summary.readingSeconds / 60) * activeState.effects.reading +
-    (summary.gamingSeconds / 60) * activeState.effects.gaming +
-    (summary.productiveSeconds / 60) * 0.6 +
-    (summary.doomscrollSeconds / 60) * activeState.effects.social +
-    (summary.otherSeconds / 60) * activeState.effects.screenTime
+    (reading.durationSeconds / 60) * activeState.effects.reading +
+    (todayWorkSeconds / 60) * 0.6 +
+    appScore
   );
 
-  const configuredCount = allApps.filter(app => !!classifications[app.packageName]).length;
+  const configuredCount = allApps.filter(app => isAppClassificationComplete(classifications[app.packageName])).length;
   const configuredProgress = allApps.length > 0 ? Math.round((configuredCount / allApps.length) * 100) : 0;
   const topApps = appRows.slice(0, 12);
 
@@ -155,6 +156,7 @@ export default function WellbeingScreen() {
         <View className="gap-3">
           {topApps.map(app => {
             const c = app.classification;
+            const isConfigured = isAppClassificationComplete(c);
             return (
               <TouchableOpacity key={app.packageName} onPress={() => router.push({ pathname: '/app-details/[packageName]', params: { packageName: app.packageName } } as any)} className={`p-4 rounded-3xl border ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
                 <View className="flex-row justify-between gap-3">
@@ -163,6 +165,12 @@ export default function WellbeingScreen() {
                     <Text className={`text-xs ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`}>{formatTime(app.timeInForeground)} • {c ? c.category : 'unconfigured'}</Text>
                   </View>
                   <View className="flex-row items-center gap-2">
+                    {isConfigured && (
+                      <View className="flex-row items-center gap-1 bg-emerald-500/10 px-2 py-1 rounded-full">
+                        <CheckCircle size={11} color="#10b981" />
+                        <Text className="text-[10px] font-black text-emerald-500">DONE</Text>
+                      </View>
+                    )}
                     {c?.heightenedRestriction && <Text className="text-xs font-black text-red-500">HEIGHTENED</Text>}
                     <ChevronRight size={16} color="#64748b" />
                   </View>

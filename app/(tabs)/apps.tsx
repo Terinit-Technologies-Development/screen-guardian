@@ -4,11 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useUsageStore } from '../../src/store/usageStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
+import { useWellbeingStore } from '../../src/store/wellbeingStore';
 import { AppCategory } from '../../src/types/usage';
 import { APP_CATEGORIES } from '../../src/utils/constants';
-import { Smartphone, Search, Filter, Shield, Clock, ChevronRight, Activity } from 'lucide-react-native';
+import { Smartphone, Search, Shield, Clock, ChevronRight, Activity, CheckCircle } from 'lucide-react-native';
 import { formatTime } from '../../src/utils/formatters';
 import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
+import { isAppClassificationComplete } from '../../src/types/wellbeing';
 
 const allFilter = 'All' as const;
 type FilterType = typeof allFilter | AppCategory;
@@ -17,6 +19,7 @@ export default function AppsScreen() {
     const router = useRouter();
     const { todayApps, allApps, isLoading, loadTodayUsage, loadAllApps, totalScreenTime } = useUsageStore();
     const { perAppLimits } = useSettingsStore();
+    const { classifications } = useWellbeingStore();
     const [activeFilter, setActiveFilter] = useState<FilterType>('All');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -28,14 +31,18 @@ export default function AppsScreen() {
     const processedApps = allApps.map(app => {
         const usage = todayApps.find(u => u.packageName === app.packageName);
         const hasLimit = !!perAppLimits[app.packageName];
+        const classification = classifications[app.packageName];
         return {
             ...app,
             timeInForeground: usage?.timeInForeground || 0,
             category: usage?.category || 'Other',
-            hasLimit
+            hasLimit,
+            classification,
+            isConfigured: isAppClassificationComplete(classification)
         };
     }).sort((a, b) => {
         if (a.hasLimit !== b.hasLimit) return a.hasLimit ? -1 : 1;
+        if (a.isConfigured !== b.isConfigured) return a.isConfigured ? -1 : 1;
         if (a.timeInForeground !== b.timeInForeground) return b.timeInForeground - a.timeInForeground;
         return a.appName.localeCompare(b.appName);
     });
@@ -154,7 +161,7 @@ export default function AppsScreen() {
                                                     });
                                                 }}
                                                 activeOpacity={0.7}
-                                                className={`p-4 rounded-[28px] border ${hasLimit ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-card border-border/80 shadow-sm'}`}
+                                                className={`p-4 rounded-[28px] border ${hasLimit ? 'bg-cyan-500/10 border-cyan-500/30' : app.isConfigured ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-card border-border/80 shadow-sm'}`}
                                             >
                                                 <View className="flex-row items-center gap-4">
                                                     <View className={`w-14 h-14 rounded-2xl items-center justify-center border ${hasLimit ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-muted/40 border-border/40'}`}>
@@ -170,11 +177,19 @@ export default function AppsScreen() {
                                                                     {app.packageName}
                                                                 </Text>
                                                             </View>
-                                                            {app.hasLimit && (
-                                                                <View className="bg-cyan-500/20 px-2 py-0.5 rounded-full">
-                                                                    <Shield size={10} color="#22d3ee" />
-                                                                </View>
-                                                            )}
+                                                            <View className="flex-row items-center gap-1">
+                                                                {app.isConfigured && (
+                                                                    <View className="bg-emerald-500/15 px-2 py-0.5 rounded-full flex-row items-center gap-1">
+                                                                        <CheckCircle size={10} color="#10b981" />
+                                                                        <Text className="text-[9px] font-black text-emerald-500">DONE</Text>
+                                                                    </View>
+                                                                )}
+                                                                {app.hasLimit && (
+                                                                    <View className="bg-cyan-500/20 px-2 py-0.5 rounded-full">
+                                                                        <Shield size={10} color="#22d3ee" />
+                                                                    </View>
+                                                                )}
+                                                            </View>
                                                         </View>
 
                                                         <View className="flex-row items-center justify-between mt-2">
@@ -183,6 +198,9 @@ export default function AppsScreen() {
                                                                 <Text className={`text-xs font-bold ${app.timeInForeground > 0 ? 'text-primary' : 'text-muted-foreground/60'}`}>
                                                                     {app.timeInForeground > 0 ? formatTime(app.timeInForeground) : 'Idle today'}
                                                                 </Text>
+                                                                {app.isConfigured && app.classification && (
+                                                                    <Text className="text-xs font-bold text-emerald-500">• {app.classification.category}</Text>
+                                                                )}
                                                             </View>
                                                             <View className="flex-row items-center gap-1">
                                                                 <Text className="text-[10px] font-bold text-muted-foreground uppercase">Settings</Text>
