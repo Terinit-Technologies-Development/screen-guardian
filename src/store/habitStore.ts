@@ -16,6 +16,7 @@ interface HabitState {
     removeHabit: (id: string) => void;
     logHabit: (habitId: string, date: string, status: HabitLogStatus, notes?: string) => void;
     getHabitStreak: (habitId: string) => number;
+    loadFromCloud: () => Promise<void>;
 }
 
 export const useHabitStore = create<HabitState>()(
@@ -168,6 +169,56 @@ export const useHabitStore = create<HabitState>()(
                     // if skipped, we just continue the loop without breaking or incrementing (streak preserved)
                 }
                 return streak;
+            },
+
+            loadFromCloud: async () => {
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session?.user) return;
+
+                    const { data: habits, error: habitsError } = await supabase
+                        .from('habits')
+                        .select('*')
+                        .eq('user_id', session.user.id);
+
+                    if (!habitsError && habits) {
+                        const mappedHabits: Habit[] = habits.map(h => ({
+                            id: h.id,
+                            title: h.title,
+                            description: h.description,
+                            type: h.type,
+                            frequency: h.frequency,
+                            icon: h.icon,
+                            color: h.color,
+                            isScreenTimeLinked: h.is_screen_time_linked,
+                            createdAt: new Date(h.created_at).getTime(),
+                        }));
+                        set({ habits: mappedHabits });
+                    }
+
+                    const { data: logs, error: logsError } = await supabase
+                        .from('habit_logs')
+                        .select('*')
+                        .eq('user_id', session.user.id);
+
+                    if (!logsError && logs) {
+                        const mappedLogs: Record<string, HabitLog> = {};
+                        logs.forEach(l => {
+                            const key = `${l.habit_id}_${l.log_date}`;
+                            mappedLogs[key] = {
+                                id: l.id,
+                                habitId: l.habit_id,
+                                logDate: l.log_date,
+                                status: l.status,
+                                notes: l.notes,
+                                loggedAt: new Date(l.logged_at).getTime(),
+                            };
+                        });
+                        set({ logs: mappedLogs });
+                    }
+                } catch (e) {
+                    console.error('Failed to load habits from cloud:', e);
+                }
             },
         }),
         {

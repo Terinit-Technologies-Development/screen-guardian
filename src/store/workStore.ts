@@ -15,6 +15,7 @@ interface WorkState {
     stopSession: (effect: PerceivedEffect, notes?: string) => void;
     cancelActiveSession: () => void;
     updateSessionHistory: (id: string, updates: Partial<WorkSession>) => void;
+    loadFromCloud: () => Promise<void>;
 }
 
 export const useWorkStore = create<WorkState>()(
@@ -105,6 +106,37 @@ export const useWorkStore = create<WorkState>()(
                     }
                 } catch (e) {
                     console.error('Failed to sync work session update to cloud:', e);
+                }
+            },
+
+            loadFromCloud: async () => {
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session?.user) return;
+
+                    const { data, error } = await supabase
+                        .from('work_sessions')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .order('created_at', { ascending: false })
+                        .limit(50);
+
+                    if (!error && data) {
+                        const mapped: WorkSession[] = data.map(s => ({
+                            id: s.id,
+                            title: s.title,
+                            description: s.description,
+                            category: s.category,
+                            startTime: new Date(s.start_time).getTime(),
+                            endTime: s.end_time ? new Date(s.end_time).getTime() : undefined,
+                            durationSeconds: s.duration_seconds,
+                            perceivedEffect: s.perceived_effect,
+                            createdAt: new Date(s.created_at).getTime(),
+                        }));
+                        set({ history: mapped });
+                    }
+                } catch (e) {
+                    console.error('Failed to load work sessions from cloud:', e);
                 }
             },
         }),

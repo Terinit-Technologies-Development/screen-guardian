@@ -281,6 +281,6 @@ export default function AppDetails() {
                     <ArrowRight size={20} color="#FFF" />
                 </TouchableOpacity>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }

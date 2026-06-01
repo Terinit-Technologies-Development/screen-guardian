@@ -14,6 +14,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Screen Guardian',
   slug: 'screen-guardian',
+  scheme: 'screen-guardian',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -30,6 +31,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: process.env.ANDROID_PACKAGE_NAME ?? 'com.screentimeapp',
+    permissions: ['WAKE_LOCK'],
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',

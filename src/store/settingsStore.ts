@@ -21,11 +21,38 @@ const syncSettingsToCloud = async (state: SettingsState) => {
         theme: state.theme,
         display_name: state.displayName,
         sync_enabled: state.syncEnabled,
+        has_completed_onboarding: state.hasCompletedOnboarding,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' });
     }
   } catch (e) {
     console.error('Failed to sync settings to cloud:', e);
+  }
+};
+
+const syncAppLimitsToCloud = async (limits: Record<string, AppLimit>) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const rows = Object.values(limits).map((limit: AppLimit) => ({
+      user_id: session.user.id,
+      app_id: limit.appId,
+      app_name: limit.appName,
+      max_time_minutes: limit.maxTimeMinutes,
+      temp_extension_minutes: limit.tempExtensionMinutes || 0,
+      extensions_today: limit.extensionsToday,
+      last_extension_date: limit.lastExtensionDate,
+      enabled: limit.enabled,
+      last_updated_at: new Date().toISOString(),
+    }));
+
+    if (rows.length > 0) {
+      await supabase.from('app_limits').upsert(rows, { onConflict: 'user_id,app_id' });
+    }
+  } catch (e) {
+    console.error('Failed to sync app limits to cloud:', e);
   }
 };
 
@@ -59,6 +86,7 @@ interface SettingsState {
   setDisplayName: (name: string) => void;
   syncEnabled: boolean;
   setSyncEnabled: (enabled: boolean) => void;
+  loadFromCloud: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -123,6 +151,7 @@ export const useSettingsStore = create<SettingsState>()(
 
         const updated = { ...current, [appId]: newLimit };
         set({ perAppLimits: updated });
+        syncAppLimitsToCloud(updated);
         // Sync to native for background enforcement
         const effectiveLimits = Object.entries(updated).reduce((acc, [id, l]) => {
           acc[id] = {
@@ -165,6 +194,7 @@ export const useSettingsStore = create<SettingsState>()(
 
         const updated = { ...state.perAppLimits, [appId]: updatedLimit };
         set({ perAppLimits: updated });
+        syncAppLimitsToCloud(updated);
 
         // Native needs the EFFECTIVE limit
         const effectiveLimits = Object.entries(updated).reduce((acc, [id, l]) => {
@@ -181,6 +211,7 @@ export const useSettingsStore = create<SettingsState>()(
       removeAppLimit: (appId) => {
         const { [appId]: _, ...remaining } = get().perAppLimits;
         set({ perAppLimits: remaining });
+        syncAppLimitsToCloud(remaining);
         // Sync to native for background enforcement
         const effectiveLimits = Object.entries(remaining).reduce((acc, [id, l]) => {
           acc[id] = {
@@ -249,6 +280,64 @@ export const useSettingsStore = create<SettingsState>()(
           syncEnabled: false,
         });
         syncSettingsToCloud(get());
+      },
+
+      loadFromCloud: async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user) return;
+
+          // Load user settings
+          const { data: settings, error: settingsError } = await supabase
+            .from('user_settings')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+
+          if (!settingsError && settings) {
+            set({
+              dailyScreenTimeLimit: settings.daily_screen_time_limit ?? 7200,
+              cooldownDuration: settings.cooldown_duration ?? 1800,
+              maxExtensions: settings.max_extensions ?? 3,
+              exerciseDifficulty: settings.exercise_difficulty ?? 'medium',
+              monitoringEnabled: settings.monitoring_enabled ?? true,
+              notificationsEnabled: settings.notifications_enabled ?? true,
+              theme: settings.theme ?? 'system',
+              displayName: settings.display_name ?? 'Guardian User',
+              syncEnabled: settings.sync_enabled ?? false,
+              hasCompletedOnboarding: settings.has_completed_onboarding ?? false,
+            });
+          }
+
+          // Load app limits
+          const { data: appLimits, error: appLimitsError } = await supabase
+            .from('app_limits')
+            .select('*')
+            .eq('user_id', session.user.id);
+
+          if (!appLimitsError && appLimits) {
+            const mapped: Record<string, AppLimit> = {};
+            appLimits.forEach(l => {
+              mapped[l.app_id] = {
+                appId: l.app_id,
+                appName: l.app_name || '',
+                maxVisits: 0,
+                maxTimeMinutes: l.max_time_minutes || 60,
+                category: 'Other' as any,
+                isWhitelisted: false,
+                enabled: l.enabled !== false,
+                createdAt: new Date(l.created_at).getTime(),
+                lastUpdatedAt: new Date(l.last_updated_at).getTime(),
+                extensionsToday: l.extensions_today || 0,
+                lastExtensionDate: l.last_extension_date || null,
+                tempExtensionMinutes: l.temp_extension_minutes || 0,
+              };
+            });
+            set({ perAppLimits: mapped });
+          }
+        } catch (e) {
+          console.error('Failed to load settings from cloud:', e);
+        }
       },
     }),
     {

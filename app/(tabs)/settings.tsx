@@ -17,19 +17,25 @@ import {
     Smartphone,
     User,
     Cloud,
-    Save
+    Save,
+    LogOut,
+    Mail
 } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { useColorScheme } from 'nativewind';
+import { useAuthStore } from '../../src/store/authStore';
+import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
+    const router = useRouter();
     const { colorScheme } = useColorScheme();
+    const { user, signOut } = useAuthStore();
     const {
         displayName,
         setDisplayName,
-        cloudSyncEnabled,
-        toggleCloudSync,
+        syncEnabled,
+        setSyncEnabled,
         dailyScreenTimeLimit,
         setDailyLimit,
         exerciseDifficulty,
@@ -47,6 +53,11 @@ export default function SettingsScreen() {
 
     const handleSaveName = () => {
         setDisplayName(tempName);
+    };
+
+    const handleSignOut = async () => {
+        await signOut();
+        router.replace('/auth/login' as any);
     };
 
     return (
@@ -91,8 +102,25 @@ export default function SettingsScreen() {
                         icon={Cloud}
                         title="Cloud Sync"
                         subtitle="Backup habits and sessions to Supabase"
-                        right={<Switch value={cloudSyncEnabled} onValueChange={toggleCloudSync} trackColor={{ false: "#3f3f46", true: "#06b6d4" }} />}
+                        right={<Switch value={syncEnabled} onValueChange={setSyncEnabled} trackColor={{ false: "#3f3f46", true: "#06b6d4" }} />}
                     />
+                </Section>
+
+                <Section title="Account">
+                    <SettingItem
+                        icon={Mail}
+                        title="Signed in as"
+                        subtitle={user?.email ?? 'No email available'}
+                        right={null}
+                    />
+                    <TouchableOpacity
+                        onPress={handleSignOut}
+                        activeOpacity={0.7}
+                        className="flex-row items-center justify-center gap-2 p-5 rounded-[24px] border border-destructive/20 bg-destructive/5 mt-2"
+                    >
+                        <LogOut size={18} className="text-destructive" />
+                        <Text className="text-destructive font-black text-sm uppercase tracking-widest">Sign Out</Text>
+                    </TouchableOpacity>
                 </Section>
 
                 {/* Appearance Section */}

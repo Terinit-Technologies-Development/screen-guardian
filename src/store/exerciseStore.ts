@@ -10,6 +10,7 @@ interface ExerciseState {
 
   addSession: (session: ExerciseSession) => void;
   getRecentSessions: (count?: number) => ExerciseSession[];
+  loadFromCloud: () => Promise<void>;
 }
 
 export const useExerciseStore = create<ExerciseState>()(
@@ -45,8 +46,10 @@ export const useExerciseStore = create<ExerciseState>()(
               id: session.id,
               user_id: authSession.user.id,
               exercise_id: session.exerciseId,
+              exercise_name: session.exerciseName,
               duration_seconds: session.durationSeconds,
-              completed_at: new Date(session.completedAt).toISOString()
+              completed_at: new Date(session.completedAt).toISOString(),
+              context: session.context,
             });
           }
         } catch (e) {
@@ -56,6 +59,43 @@ export const useExerciseStore = create<ExerciseState>()(
 
       getRecentSessions: (count = 10) => {
         return get().completedSessions.slice(0, count);
+      },
+
+      loadFromCloud: async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user) return;
+
+          const { data, error } = await supabase
+            .from('exercise_sessions')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('completed_at', { ascending: false })
+            .limit(50);
+
+          if (!error && data) {
+            const mapped: ExerciseSession[] = data.map(s => ({
+              id: s.id,
+              exerciseId: s.exercise_id || '',
+              exerciseName: s.exercise_name,
+              completedAt: new Date(s.completed_at).getTime(),
+              durationSeconds: s.duration_seconds,
+              context: s.context,
+            }));
+            set({
+              completedSessions: mapped,
+              stats: {
+                totalCompleted: mapped.length,
+                totalDuration: mapped.reduce((sum, s) => sum + s.durationSeconds, 0),
+                totalCalories: 0,
+                completionRate: 100,
+                favoriteExercise: mapped[0]?.exerciseName,
+              },
+            });
+          }
+        } catch (e) {
+          console.error('Failed to load exercise sessions from cloud:', e);
+        }
       },
     }),
     {

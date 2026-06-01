@@ -14,6 +14,7 @@ interface MotivationState {
     updateMotivation: (id: string, updates: Partial<Motivation>) => void;
     removeMotivation: (id: string) => void;
     reorderMotivations: (orderedIds: string[]) => void;
+    loadFromCloud: () => Promise<void>;
 }
 
 export const useMotivationStore = create<MotivationState>()(
@@ -123,6 +124,34 @@ export const useMotivationStore = create<MotivationState>()(
                     }
                 } catch (e) {
                     console.error('Failed to sync reordered motivations to cloud:', e);
+                }
+            },
+
+            loadFromCloud: async () => {
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session?.user) return;
+
+                    const { data, error } = await supabase
+                        .from('motivations')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .order('display_order', { ascending: true });
+
+                    if (!error && data) {
+                        const mapped: Motivation[] = data.map(m => ({
+                            id: m.id,
+                            title: m.title,
+                            description: m.description,
+                            imageUrl: m.image_url,
+                            displayOrder: m.display_order,
+                            createdAt: new Date(m.created_at).getTime(),
+                            updatedAt: m.updated_at ? new Date(m.updated_at).getTime() : undefined,
+                        }));
+                        set({ motivations: mapped });
+                    }
+                } catch (e) {
+                    console.error('Failed to load motivations from cloud:', e);
                 }
             },
         }),

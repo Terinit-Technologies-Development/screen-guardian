@@ -5,6 +5,8 @@ import { AppUsageData, DailySummary } from '../types/usage';
 import { Platform } from 'react-native';
 import ScreenTimeMonitor from '../native/ScreenTimeMonitor';
 import MockDataService from '../services/MockDataService';
+import { supabase } from '../lib/supabase';
+import { ENV } from '../config/env';
 
 interface UsageState {
   totalScreenTime: number;
@@ -32,6 +34,9 @@ interface UsageState {
   useExtension: () => void;
   startMonitoring: () => Promise<void>;
   stopMonitoring: () => Promise<void>;
+  syncUsageToCloud: () => Promise<void>;
+  syncDailyScreenTime: (totalSeconds: number, limitSeconds?: number) => Promise<void>;
+  loadFromCloud: () => Promise<void>;
 }
 
 export const useUsageStore = create<UsageState>()(
@@ -102,6 +107,10 @@ export const useUsageStore = create<UsageState>()(
             isLoading: false,
           });
           get().checkLimitExceeded();
+
+          // Sync to cloud after loading
+          get().syncUsageToCloud();
+          get().syncDailyScreenTime(data.totalScreenTime);
         } catch (error) {
           set({ error: 'Failed to load usage data', isLoading: false });
         }
@@ -172,6 +181,86 @@ export const useUsageStore = create<UsageState>()(
           throw error;
         }
       },
+
+      syncUsageToCloud: async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user) return;
+
+          const { todayApps } = get();
+          if (todayApps.length === 0) return;
+
+          const today = new Date().toISOString().split('T')[0];
+          const snapshots = todayApps.map((app: AppUsageData) => ({
+            app_id: app.packageName,
+            app_name: app.appName,
+            snapshot_date: today,
+            usage_seconds: app.timeInForeground,
+            launch_count: app.launchCount ?? 0,
+            device_id: Platform.OS === 'android' ? 'android-device' : null,
+          }));
+
+          const { error } = await supabase.functions.invoke('sync-usage', {
+            body: { snapshots },
+          });
+
+          if (error) {
+            console.error('Failed to sync usage to cloud:', error);
+          }
+        } catch (e) {
+          console.error('Failed to sync usage to cloud:', e);
+        }
+      },
+
+      syncDailyScreenTime: async (totalSeconds: number, limitSeconds?: number) => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user) return;
+
+          const today = new Date().toISOString().split('T')[0];
+          await supabase.from('daily_screen_time_logs').upsert({
+            user_id: session.user.id,
+            log_date: today,
+            total_seconds: totalSeconds,
+            limit_seconds: limitSeconds ?? get().dailyLimit,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,log_date' });
+        } catch (e) {
+          console.error('Failed to sync daily screen time to cloud:', e);
+        }
+      },
+
+      loadFromCloud: async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user) return;
+
+          const today = new Date().toISOString().split('T')[0];
+
+          // Load daily screen time logs for weekly charting
+          const { data: dailyLogs, error: logsError } = await supabase
+            .from('daily_screen_time_logs')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('log_date', { ascending: false })
+            .limit(30);
+
+          if (!logsError && dailyLogs && dailyLogs.length > 0) {
+            const weeklySummaries: DailySummary[] = dailyLogs.map(log => ({
+              date: log.log_date,
+              totalScreenTime: log.total_seconds,
+              totalVisits: 0,
+              totalAppsUsed: 0,
+              exercisesCompleted: 0,
+              extensionsUsed: 0,
+              limitExceeded: (log.limit_seconds && log.total_seconds >= log.limit_seconds) || false,
+            }));
+            set({ weeklyData: weeklySummaries });
+          }
+        } catch (e) {
+          console.error('Failed to load usage from cloud:', e);
+        }
+      },
     }),
     {
       name: 'screen-time-usage',
@@ -180,7 +269,6 @@ export const useUsageStore = create<UsageState>()(
         dailyLimit: state.dailyLimit,
         extensionsUsedToday: state.extensionsUsedToday,
         lastUpdated: state.lastUpdated,
-        // We don't persist volatile usage data, only settings/counters
       }),
     }
   )
