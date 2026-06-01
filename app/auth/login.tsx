@@ -15,8 +15,7 @@ export default function LoginScreen() {
     setMessage(null);
     try {
       await signIn(email.trim(), password);
-      const { isEmailVerified } = useAuthStore.getState();
-      router.replace((isEmailVerified ? '/(tabs)' : '/auth/verify-email') as any);
+      // Auth guard in _layout.tsx handles the redirect — don't duplicate
     } catch (error: any) {
       const errorMessage = error?.message ?? 'Unable to sign in';
       setMessage(errorMessage);
@@ -30,8 +29,7 @@ export default function LoginScreen() {
     setMessage(null);
     try {
       await signInWithGoogle();
-      const { isEmailVerified } = useAuthStore.getState();
-      router.replace((isEmailVerified ? '/(tabs)' : '/auth/verify-email') as any);
+      // Auth guard in _layout.tsx handles the redirect — don't duplicate
     } catch (error: any) {
       setMessage(error?.message ?? 'Unable to sign in with Google');
     }
