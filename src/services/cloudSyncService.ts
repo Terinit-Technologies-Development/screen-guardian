@@ -6,6 +6,7 @@ import { useExerciseStore } from '../store/exerciseStore';
 import { useFocusStore } from '../store/focusStore';
 import { useUsageStore } from '../store/usageStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { useReadingStore } from '../store/readingStore';
 
 export async function syncAllFromCloud() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -19,5 +20,6 @@ export async function syncAllFromCloud() {
     useFocusStore.getState().loadFromCloud(),
     useUsageStore.getState().loadFromCloud(),
     useSettingsStore.getState().loadFromCloud(),
+    useReadingStore.getState().loadFromCloud(),
   ]);
 }

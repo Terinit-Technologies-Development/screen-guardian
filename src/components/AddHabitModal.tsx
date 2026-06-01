@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Switch, Modal, ScrollView, Pressable } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHabitStore } from '../store/habitStore';
-import { HabitType, HabitFrequency, DayOfWeek, ALL_DAYS } from '../types/habits';
+import { HabitType, HabitFrequency, HabitMetricType, DayOfWeek, ALL_DAYS } from '../types/habits';
 
 interface Props {
     visible: boolean;
@@ -13,12 +14,15 @@ interface Props {
 export function AddHabitModal({ visible, onClose }: Props) {
     const { colorScheme } = useColorScheme();
     const isDark = colorScheme === 'dark';
+    const insets = useSafeAreaInsets();
     const { addHabit } = useHabitStore();
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [type, setType] = useState<HabitType>('build');
     const [frequency, setFrequency] = useState<HabitFrequency>('daily');
+    const [metricType, setMetricType] = useState<HabitMetricType>('completion');
+    const [targetValue, setTargetValue] = useState('10');
     const [routineDays, setRoutineDays] = useState<DayOfWeek[]>([]);
     const [isScreenTimeLinked, setIsScreenTimeLinked] = useState(false);
 
@@ -38,6 +42,8 @@ export function AddHabitModal({ visible, onClose }: Props) {
             type,
             frequency,
             routineDays: frequency === 'weekly' ? routineDays : undefined,
+            metricType,
+            targetValue: metricType === 'completion' ? undefined : Math.max(1, parseInt(targetValue, 10) || 1),
             icon: type === 'build' ? 'CheckCircle' : 'XCircle',
             color: type === 'build' ? '#10b981' : '#ef4444',
             isScreenTimeLinked,
@@ -52,6 +58,8 @@ export function AddHabitModal({ visible, onClose }: Props) {
         setDescription('');
         setType('build');
         setFrequency('daily');
+        setMetricType('completion');
+        setTargetValue('10');
         setRoutineDays([]);
         setIsScreenTimeLinked(false);
     };
@@ -80,7 +88,11 @@ export function AddHabitModal({ visible, onClose }: Props) {
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView className="px-6 pt-4" showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        className="px-6 pt-4"
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 24, 40) }}
+                    >
                         <View className="mb-5">
                             <Text className={`text-sm font-bold mb-2 ${label}`}>Habit Name</Text>
                             <TextInput
@@ -124,7 +136,10 @@ export function AddHabitModal({ visible, onClose }: Props) {
                                     </Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    onPress={() => setType('quit')}
+                                    onPress={() => {
+                                        setType('quit');
+                                        setMetricType('completion');
+                                    }}
                                     className={`flex-1 p-4 rounded-xl border ${type === 'quit'
                                         ? (isDark ? 'bg-red-900/30 border-red-500' : 'bg-red-50 border-red-500')
                                         : `${inputBg} ${inputBorder}`
@@ -189,6 +204,49 @@ export function AddHabitModal({ visible, onClose }: Props) {
                             </View>
                         )}
 
+                        {type === 'build' && (
+                            <View className="mb-5">
+                                <Text className={`text-sm font-bold mb-2 ${label}`}>Tracking</Text>
+                                <View className="gap-2">
+                                    {([
+                                        ['completion', 'Simple completion', 'Tap complete manually'],
+                                        ['pages_read', 'Reading pages', 'Auto-complete from in-app books'],
+                                        ['reading_minutes', 'Reading minutes', 'Counts active time inside reader'],
+                                    ] as [HabitMetricType, string, string][]).map(([id, titleText, subtitle]) => (
+                                        <TouchableOpacity
+                                            key={id}
+                                            onPress={() => setMetricType(id)}
+                                            className={`p-4 rounded-xl border ${metricType === id
+                                                ? 'bg-cyan-500/10 border-cyan-500'
+                                                : `${inputBg} ${inputBorder}`
+                                            }`}
+                                        >
+                                            <Text className={`font-bold ${metricType === id ? 'text-cyan-500' : textColor}`}>
+                                                {titleText}
+                                            </Text>
+                                            <Text className={`text-xs mt-0.5 ${muted}`}>{subtitle}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
+                                {metricType !== 'completion' && (
+                                    <View className="mt-3">
+                                        <Text className={`text-xs font-bold mb-2 ${label}`}>
+                                            Target {metricType === 'pages_read' ? 'pages' : 'minutes'} per scheduled day
+                                        </Text>
+                                        <TextInput
+                                            value={targetValue}
+                                            onChangeText={setTargetValue}
+                                            keyboardType="number-pad"
+                                            placeholder="10"
+                                            placeholderTextColor={isDark ? '#525252' : '#a3a3a3'}
+                                            className={`p-4 rounded-xl text-base ${inputBg} ${textColor} border ${inputBorder}`}
+                                        />
+                                    </View>
+                                )}
+                            </View>
+                        )}
+
                         <View className={`p-4 rounded-xl mb-6 flex-row items-center justify-between ${inputBg} border ${inputBorder}`}>
                             <View className="flex-1 pr-4">
                                 <Text className={`font-bold text-base ${textColor}`}>Link to Screen Time</Text>
@@ -204,7 +262,7 @@ export function AddHabitModal({ visible, onClose }: Props) {
                         <TouchableOpacity
                             onPress={handleSave}
                             disabled={!title.trim() || (frequency === 'weekly' && routineDays.length === 0)}
-                            className={`p-4 rounded-2xl mb-8 ${(!title.trim() || (frequency === 'weekly' && routineDays.length === 0))
+                            className={`p-4 rounded-2xl ${(!title.trim() || (frequency === 'weekly' && routineDays.length === 0))
                                 ? (isDark ? 'bg-neutral-800' : 'bg-neutral-200')
                                 : 'bg-cyan-500'
                             }`}

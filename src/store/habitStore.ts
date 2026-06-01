@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Habit, HabitLog, HabitLogStatus, DayOfWeek, ALL_DAYS } from '../types/habits';
+import { Habit, HabitLog, HabitLogStatus, HabitLogSource, DayOfWeek } from '../types/habits';
 import * as Crypto from 'expo-crypto';
 import { supabase } from '../lib/supabase';
-import { format, addDays, subDays, parseISO } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
 
 const DAY_MAP: Record<number, DayOfWeek> = {
     0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat',
@@ -18,20 +18,6 @@ function isScheduledDay(habit: Habit, dateStr: string): boolean {
     return habit.routineDays.includes(dayName);
 }
 
-function getConsecutiveScheduledDaysBefore(habit: Habit, fromDate: Date): string[] {
-    const dates: string[] = [];
-    let cursor = fromDate;
-    // Go back up to 400 days to find consecutive scheduled days
-    for (let i = 0; i < 400; i++) {
-        const dateStr = format(cursor, 'yyyy-MM-dd');
-        if (isScheduledDay(habit, dateStr)) {
-            dates.unshift(dateStr);
-        }
-        cursor = subDays(cursor, 1);
-    }
-    return dates.reverse(); // most recent first
-}
-
 interface HabitState {
     habits: Habit[];
     logs: Record<string, HabitLog>;
@@ -40,7 +26,8 @@ interface HabitState {
     addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => void;
     updateHabit: (id: string, updates: Partial<Habit>) => void;
     removeHabit: (id: string) => void;
-    logHabit: (habitId: string, date: string, status: HabitLogStatus, notes?: string) => void;
+    logHabit: (habitId: string, date: string, status: HabitLogStatus, notes?: string, progressValue?: number, source?: HabitLogSource) => void;
+    recordReadingProgress: (date: string, pagesRead: number, durationSeconds: number) => Promise<void>;
     getHabitStreak: (habitId: string) => number;
     loadFromCloud: () => Promise<void>;
 }
@@ -74,6 +61,8 @@ export const useHabitStore = create<HabitState>()(
                             type: newHabit.type,
                             frequency: newHabit.frequency,
                             routine_days: newHabit.routineDays ?? null,
+                            metric_type: newHabit.metricType ?? 'completion',
+                            target_value: newHabit.targetValue ?? null,
                             icon: newHabit.icon,
                             color: newHabit.color,
                             is_screen_time_linked: newHabit.isScreenTimeLinked,
@@ -101,6 +90,8 @@ export const useHabitStore = create<HabitState>()(
                         if (updates.type !== undefined) dbUpdates.type = updates.type;
                         if (updates.frequency !== undefined) dbUpdates.frequency = updates.frequency;
                         if (updates.routineDays !== undefined) dbUpdates.routine_days = updates.routineDays;
+                        if (updates.metricType !== undefined) dbUpdates.metric_type = updates.metricType;
+                        if (updates.targetValue !== undefined) dbUpdates.target_value = updates.targetValue;
                         if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
                         if (updates.color !== undefined) dbUpdates.color = updates.color;
                         if (updates.isScreenTimeLinked !== undefined) dbUpdates.is_screen_time_linked = updates.isScreenTimeLinked;
@@ -139,13 +130,15 @@ export const useHabitStore = create<HabitState>()(
                 }
             },
 
-            logHabit: async (habitId, date, status, notes) => {
+            logHabit: async (habitId, date, status, notes, progressValue = 0, source = 'manual') => {
                 const key = `${habitId}_${date}`;
                 const newLog: HabitLog = {
                     id: Crypto.randomUUID(),
                     habitId,
                     logDate: date,
                     status,
+                    progressValue,
+                    source,
                     notes,
                     loggedAt: Date.now(),
                 };
@@ -163,12 +156,51 @@ export const useHabitStore = create<HabitState>()(
                             habit_id: newLog.habitId,
                             log_date: newLog.logDate,
                             status: newLog.status,
+                            progress_value: newLog.progressValue ?? 0,
+                            source: newLog.source ?? 'manual',
                             notes: newLog.notes ?? null,
                             logged_at: new Date(newLog.loggedAt).toISOString(),
                         }, { onConflict: 'habit_id,log_date' });
                     }
                 } catch (e) {
                     console.error('Failed to sync habit log to cloud:', e);
+                }
+            },
+
+            recordReadingProgress: async (date, pagesRead, durationSeconds) => {
+                if (pagesRead <= 0 && durationSeconds <= 0) return;
+
+                const { habits, logs } = get();
+                const readingHabits = habits.filter(h =>
+                    h.type === 'build' &&
+                    (h.metricType === 'pages_read' || h.metricType === 'reading_minutes') &&
+                    isScheduledDay(h, date)
+                );
+
+                if (readingHabits.length === 0) return;
+
+                for (const habit of readingHabits) {
+                    const key = `${habit.id}_${date}`;
+                    const existing = logs[key];
+                    const increment = habit.metricType === 'pages_read'
+                        ? pagesRead
+                        : Math.floor(durationSeconds / 60);
+                    if (increment <= 0) continue;
+
+                    const nextProgress = (existing?.progressValue ?? 0) + increment;
+                    const target = habit.targetValue ?? 1;
+                    const status: HabitLogStatus = nextProgress >= target ? 'completed' : 'skipped';
+
+                    await get().logHabit(
+                        habit.id,
+                        date,
+                        status,
+                        habit.metricType === 'pages_read'
+                            ? `${nextProgress}/${target} pages read`
+                            : `${nextProgress}/${target} reading minutes`,
+                        nextProgress,
+                        'reading'
+                    );
                 }
             },
 
@@ -206,12 +238,9 @@ export const useHabitStore = create<HabitState>()(
                     if (log.status === 'completed') {
                         streak++;
                     } else if (log.status === 'skipped') {
-                        // skipped doesn't break the streak for build habits
-                        if (habit.type === 'build') {
-                            cursor = subDays(cursor, 1);
-                            continue;
-                        }
-                        streak++;
+                        // Skipped days preserve the existing streak without adding to it.
+                        cursor = subDays(cursor, 1);
+                        continue;
                     } else {
                         break; // failed = streak broken
                     }
@@ -248,6 +277,8 @@ export const useHabitStore = create<HabitState>()(
                             type: h.type as Habit['type'],
                             frequency: h.frequency as Habit['frequency'],
                             routineDays: (h.routine_days as DayOfWeek[]) ?? undefined,
+                            metricType: (h.metric_type as Habit['metricType']) ?? 'completion',
+                            targetValue: (h.target_value as number) ?? undefined,
                             icon: (h.icon as string) ?? 'Circle',
                             color: (h.color as string) ?? '#06b6d4',
                             isScreenTimeLinked: Boolean(h.is_screen_time_linked),
@@ -270,6 +301,8 @@ export const useHabitStore = create<HabitState>()(
                                 habitId: l.habit_id as string,
                                 logDate: l.log_date as string,
                                 status: l.status as HabitLogStatus,
+                                progressValue: (l.progress_value as number) ?? 0,
+                                source: (l.source as HabitLogSource) ?? 'manual',
                                 notes: (l.notes as string) ?? undefined,
                                 loggedAt: new Date(l.logged_at as string).getTime(),
                             };

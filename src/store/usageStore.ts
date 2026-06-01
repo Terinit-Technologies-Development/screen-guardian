@@ -192,17 +192,19 @@ export const useUsageStore = create<UsageState>()(
 
           const today = new Date().toISOString().split('T')[0];
           const snapshots = todayApps.map((app: AppUsageData) => ({
+            user_id: session.user.id,
             app_id: app.packageName,
             app_name: app.appName,
             snapshot_date: today,
             usage_seconds: app.timeInForeground,
             launch_count: app.launchCount ?? 0,
             device_id: Platform.OS === 'android' ? 'android-device' : null,
+            synced_at: new Date().toISOString(),
           }));
 
-          const { error } = await supabase.functions.invoke('sync-usage', {
-            body: { snapshots },
-          });
+          const { error } = await supabase
+            .from('usage_snapshots')
+            .upsert(snapshots, { onConflict: 'user_id,snapshot_date,app_id,device_id' });
 
           if (error) {
             console.error('Failed to sync usage to cloud:', error);

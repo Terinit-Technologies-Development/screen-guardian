@@ -23,6 +23,9 @@ export default function HabitsScreen() {
         const streak = getHabitStreak(habit.id);
 
         const isBuild = habit.type === 'build';
+        const isReadingMetric = habit.metricType === 'pages_read' || habit.metricType === 'reading_minutes';
+        const target = habit.targetValue ?? 1;
+        const progress = todayLog?.progressValue ?? 0;
 
         return (
             <View
@@ -85,6 +88,11 @@ export default function HabitsScreen() {
                             </Text>
                         )}
                     </View>
+                    {isReadingMetric && (
+                        <Text className={`text-xs mt-1 font-semibold ${status === 'completed' ? 'text-emerald-500' : isDark ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                            {progress}/{target} {habit.metricType === 'pages_read' ? 'pages' : 'minutes'} today
+                        </Text>
+                    )}
                 </View>
 
                 <View className="flex-row gap-1.5">
