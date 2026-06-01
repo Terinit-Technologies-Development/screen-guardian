@@ -1,6 +1,9 @@
 export type HabitType = 'build' | 'quit';
 export type HabitFrequency = 'daily' | 'weekly';
 export type HabitLogStatus = 'completed' | 'skipped' | 'failed';
+export type DayOfWeek = 'Sun' | 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat';
+
+export const ALL_DAYS: DayOfWeek[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export interface Habit {
     id: string;
@@ -8,10 +11,11 @@ export interface Habit {
     description?: string;
     type: HabitType;
     frequency: HabitFrequency;
-    icon: string; // Lucide icon name
-    color: string; // Hex color code
+    routineDays?: DayOfWeek[]; // which days this habit is scheduled for (weekly habits)
+    icon: string;
+    color: string;
     isScreenTimeLinked: boolean;
-    createdAt: number; // timestamp
+    createdAt: number;
 }
 
 export interface HabitLog {
@@ -20,5 +24,5 @@ export interface HabitLog {
     logDate: string; // YYYY-MM-DD format
     status: HabitLogStatus;
     notes?: string;
-    loggedAt: number; // timestamp
+    loggedAt: number;
 }
