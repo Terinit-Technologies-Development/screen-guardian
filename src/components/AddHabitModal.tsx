@@ -23,6 +23,7 @@ export function AddHabitModal({ visible, onClose }: Props) {
     const [frequency, setFrequency] = useState<HabitFrequency>('daily');
     const [metricType, setMetricType] = useState<HabitMetricType>('completion');
     const [targetValue, setTargetValue] = useState('10');
+    const [intendedTimeMinutes, setIntendedTimeMinutes] = useState('15');
     const [routineDays, setRoutineDays] = useState<DayOfWeek[]>([]);
     const [isScreenTimeLinked, setIsScreenTimeLinked] = useState(false);
 
@@ -44,6 +45,7 @@ export function AddHabitModal({ visible, onClose }: Props) {
             routineDays: frequency === 'weekly' ? routineDays : undefined,
             metricType,
             targetValue: metricType === 'completion' ? undefined : Math.max(1, parseInt(targetValue, 10) || 1),
+            intendedTimeMinutes: Math.max(0, parseInt(intendedTimeMinutes, 10) || 0) || undefined,
             icon: type === 'build' ? 'CheckCircle' : 'XCircle',
             color: type === 'build' ? '#10b981' : '#ef4444',
             isScreenTimeLinked,
@@ -60,6 +62,7 @@ export function AddHabitModal({ visible, onClose }: Props) {
         setFrequency('daily');
         setMetricType('completion');
         setTargetValue('10');
+        setIntendedTimeMinutes('15');
         setRoutineDays([]);
         setIsScreenTimeLinked(false);
     };
@@ -246,6 +249,19 @@ export function AddHabitModal({ visible, onClose }: Props) {
                                 )}
                             </View>
                         )}
+
+                        <View className="mb-5">
+                            <Text className={`text-sm font-bold mb-2 ${label}`}>Intended Time</Text>
+                            <TextInput
+                                value={intendedTimeMinutes}
+                                onChangeText={setIntendedTimeMinutes}
+                                keyboardType="number-pad"
+                                placeholder="15"
+                                placeholderTextColor={isDark ? '#525252' : '#a3a3a3'}
+                                className={`p-4 rounded-xl text-base ${inputBg} ${textColor} border ${inputBorder}`}
+                            />
+                            <Text className={`text-xs mt-2 ${muted}`}>Minutes you intend to spend. Completing with more time is positive; less time is flagged for attention.</Text>
+                        </View>
 
                         <View className={`p-4 rounded-xl mb-6 flex-row items-center justify-between ${inputBg} border ${inputBorder}`}>
                             <View className="flex-1 pr-4">

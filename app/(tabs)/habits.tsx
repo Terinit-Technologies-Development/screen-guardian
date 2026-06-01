@@ -13,6 +13,7 @@ export default function HabitsScreen() {
     const isDark = colorScheme === 'dark';
     const { habits, logs, logHabit, getHabitStreak } = useHabitStore();
     const [showAddModal, setShowAddModal] = useState(false);
+    const [actualMinutes, setActualMinutes] = useState<Record<string, number>>({});
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -26,6 +27,16 @@ export default function HabitsScreen() {
         const isReadingMetric = habit.metricType === 'pages_read' || habit.metricType === 'reading_minutes';
         const target = habit.targetValue ?? 1;
         const progress = todayLog?.progressValue ?? 0;
+        const intendedMinutes = habit.intendedTimeMinutes ?? 0;
+        const selectedActualMinutes = actualMinutes[habit.id] ?? intendedMinutes;
+        const loggedActualMinutes = Math.round((todayLog?.durationSeconds ?? 0) / 60);
+
+        const updateActualMinutes = (delta: number) => {
+            setActualMinutes(prev => ({
+                ...prev,
+                [habit.id]: Math.max(0, (prev[habit.id] ?? intendedMinutes) + delta),
+            }));
+        };
 
         return (
             <View
@@ -93,6 +104,22 @@ export default function HabitsScreen() {
                             {progress}/{target} {habit.metricType === 'pages_read' ? 'pages' : 'minutes'} today
                         </Text>
                     )}
+                    {intendedMinutes > 0 && !isReadingMetric && (
+                        <View className="flex-row items-center gap-2 mt-2">
+                            <TouchableOpacity onPress={() => updateActualMinutes(-5)} className={`px-2 py-1 rounded-lg ${isDark ? 'bg-neutral-800' : 'bg-neutral-100'}`}>
+                                <Text className={isDark ? 'text-neutral-300' : 'text-neutral-600'}>-5</Text>
+                            </TouchableOpacity>
+                            <Text className={`text-[11px] font-bold ${status === 'completed'
+                                ? loggedActualMinutes >= intendedMinutes ? 'text-emerald-500' : 'text-orange-500'
+                                : isDark ? 'text-neutral-400' : 'text-neutral-500'
+                            }`}>
+                                {status === 'completed' ? loggedActualMinutes : selectedActualMinutes}/{intendedMinutes} min
+                            </Text>
+                            <TouchableOpacity onPress={() => updateActualMinutes(5)} className={`px-2 py-1 rounded-lg ${isDark ? 'bg-neutral-800' : 'bg-neutral-100'}`}>
+                                <Text className={isDark ? 'text-neutral-300' : 'text-neutral-600'}>+5</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </View>
 
                 <View className="flex-row gap-1.5">
@@ -140,7 +167,19 @@ export default function HabitsScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        onPress={() => logHabit(habit.id, todayStr, 'completed')}
+                        onPress={() => logHabit(
+                            habit.id,
+                            todayStr,
+                            'completed',
+                            intendedMinutes > 0
+                                ? selectedActualMinutes >= intendedMinutes
+                                    ? `Met intended time: ${selectedActualMinutes}/${intendedMinutes} min`
+                                    : `Below intended time: ${selectedActualMinutes}/${intendedMinutes} min`
+                                : undefined,
+                            0,
+                            'manual',
+                            selectedActualMinutes * 60
+                        )}
                         className={`w-9 h-9 rounded-xl items-center justify-center border ${
                             status === 'completed'
                                 ? 'bg-emerald-500 border-emerald-500'

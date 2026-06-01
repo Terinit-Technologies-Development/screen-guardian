@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Smartphone, Home, BarChart2, Settings, Dumbbell, BookOpen } from 'lucide-react-native';
+import { Smartphone, Home, BarChart2, Settings, Dumbbell, BookOpen, HeartPulse } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,6 +47,13 @@ export default function TabLayout() {
                 options={{
                     title: 'Reading',
                     tabBarIcon: ({ color }: { color: string }) => <BookOpen size={22} color={color} />,
+                }}
+            />
+            <Tabs.Screen
+                name="wellbeing"
+                options={{
+                    title: 'Wellbeing',
+                    tabBarIcon: ({ color }: { color: string }) => <HeartPulse size={22} color={color} />,
                 }}
             />
             <Tabs.Screen

@@ -26,7 +26,7 @@ interface HabitState {
     addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => void;
     updateHabit: (id: string, updates: Partial<Habit>) => void;
     removeHabit: (id: string) => void;
-    logHabit: (habitId: string, date: string, status: HabitLogStatus, notes?: string, progressValue?: number, source?: HabitLogSource) => void;
+    logHabit: (habitId: string, date: string, status: HabitLogStatus, notes?: string, progressValue?: number, source?: HabitLogSource, durationSeconds?: number) => void;
     recordReadingProgress: (date: string, pagesRead: number, durationSeconds: number) => Promise<void>;
     getHabitStreak: (habitId: string) => number;
     loadFromCloud: () => Promise<void>;
@@ -63,6 +63,7 @@ export const useHabitStore = create<HabitState>()(
                             routine_days: newHabit.routineDays ?? null,
                             metric_type: newHabit.metricType ?? 'completion',
                             target_value: newHabit.targetValue ?? null,
+                            intended_minutes: newHabit.intendedTimeMinutes ?? null,
                             icon: newHabit.icon,
                             color: newHabit.color,
                             is_screen_time_linked: newHabit.isScreenTimeLinked,
@@ -92,6 +93,7 @@ export const useHabitStore = create<HabitState>()(
                         if (updates.routineDays !== undefined) dbUpdates.routine_days = updates.routineDays;
                         if (updates.metricType !== undefined) dbUpdates.metric_type = updates.metricType;
                         if (updates.targetValue !== undefined) dbUpdates.target_value = updates.targetValue;
+                        if (updates.intendedTimeMinutes !== undefined) dbUpdates.intended_minutes = updates.intendedTimeMinutes;
                         if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
                         if (updates.color !== undefined) dbUpdates.color = updates.color;
                         if (updates.isScreenTimeLinked !== undefined) dbUpdates.is_screen_time_linked = updates.isScreenTimeLinked;
@@ -130,7 +132,7 @@ export const useHabitStore = create<HabitState>()(
                 }
             },
 
-            logHabit: async (habitId, date, status, notes, progressValue = 0, source = 'manual') => {
+            logHabit: async (habitId, date, status, notes, progressValue = 0, source = 'manual', durationSeconds = 0) => {
                 const key = `${habitId}_${date}`;
                 const newLog: HabitLog = {
                     id: Crypto.randomUUID(),
@@ -139,6 +141,7 @@ export const useHabitStore = create<HabitState>()(
                     status,
                     progressValue,
                     source,
+                    durationSeconds,
                     notes,
                     loggedAt: Date.now(),
                 };
@@ -158,6 +161,7 @@ export const useHabitStore = create<HabitState>()(
                             status: newLog.status,
                             progress_value: newLog.progressValue ?? 0,
                             source: newLog.source ?? 'manual',
+                            duration_seconds: Math.round(newLog.durationSeconds ?? 0),
                             notes: newLog.notes ?? null,
                             logged_at: new Date(newLog.loggedAt).toISOString(),
                         }, { onConflict: 'habit_id,log_date' });
@@ -199,7 +203,8 @@ export const useHabitStore = create<HabitState>()(
                             ? `${nextProgress}/${target} pages read`
                             : `${nextProgress}/${target} reading minutes`,
                         nextProgress,
-                        'reading'
+                        'reading',
+                        durationSeconds
                     );
                 }
             },
@@ -279,6 +284,7 @@ export const useHabitStore = create<HabitState>()(
                             routineDays: (h.routine_days as DayOfWeek[]) ?? undefined,
                             metricType: (h.metric_type as Habit['metricType']) ?? 'completion',
                             targetValue: (h.target_value as number) ?? undefined,
+                            intendedTimeMinutes: (h.intended_minutes as number) ?? undefined,
                             icon: (h.icon as string) ?? 'Circle',
                             color: (h.color as string) ?? '#06b6d4',
                             isScreenTimeLinked: Boolean(h.is_screen_time_linked),
@@ -303,6 +309,7 @@ export const useHabitStore = create<HabitState>()(
                                 status: l.status as HabitLogStatus,
                                 progressValue: (l.progress_value as number) ?? 0,
                                 source: (l.source as HabitLogSource) ?? 'manual',
+                                durationSeconds: (l.duration_seconds as number) ?? 0,
                                 notes: (l.notes as string) ?? undefined,
                                 loggedAt: new Date(l.logged_at as string).getTime(),
                             };

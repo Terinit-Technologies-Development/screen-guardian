@@ -16,6 +16,7 @@ export interface Habit {
     routineDays?: DayOfWeek[]; // which days this habit is scheduled for (weekly habits)
     metricType?: HabitMetricType;
     targetValue?: number;
+    intendedTimeMinutes?: number;
     icon: string;
     color: string;
     isScreenTimeLinked: boolean;
@@ -28,6 +29,7 @@ export interface HabitLog {
     logDate: string; // YYYY-MM-DD format
     status: HabitLogStatus;
     progressValue?: number;
+    durationSeconds?: number;
     source?: HabitLogSource;
     notes?: string;
     loggedAt: number;
