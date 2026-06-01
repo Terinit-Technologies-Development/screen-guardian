@@ -16,7 +16,20 @@ web-build/
 
 # Native (generated — track manually if writing custom Kotlin/Swift)
 android/
-!android/app/src/main/java/com/screentimeapp/modules/
+!android/
+android/*
+!android/app/
+android/app/*
+!android/app/src/
+android/app/src/*
+!android/app/src/main/
+android/app/src/main/*
+!android/app/src/main/java/
+!android/app/src/main/java/**
+!android/app/src/main/res/
+android/app/src/main/res/*
+!android/app/src/main/res/xml/
+!android/app/src/main/res/xml/**
 ios/
 
 # Logs
@@ -68,4 +81,4 @@ backend/supabase/.temp/
 *.orig.*
 web-build/
 app.json.bak
-
+
