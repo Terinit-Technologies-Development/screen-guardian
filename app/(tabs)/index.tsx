@@ -9,10 +9,12 @@ import { PermissionPrompt } from '../../src/components/PermissionPrompt';
 import DeepFocusModal from '../../src/components/DeepFocusModal';
 import { AppUsageData } from '../../src/types/usage';
 import { formatTime } from '../../src/utils/formatters';
-import { RefreshCw, Smartphone, Eye, Zap, LayoutGrid, Clock, ChevronRight, Shield, CheckCircle, Briefcase } from 'lucide-react-native';
+import { RefreshCw, Smartphone, Eye, Zap, LayoutGrid, Clock, ChevronRight, Shield, CheckCircle, Briefcase, User, Mail, Cloud, BookOpen, Flame, Target } from 'lucide-react-native';
 import { format, isToday } from 'date-fns';
 import { useHabitStore } from '../../src/store/habitStore';
 import { useWorkStore } from '../../src/store/workStore';
+import { useAuthStore } from '../../src/store/authStore';
+import { useReadingStore } from '../../src/store/readingStore';
 import Animated, {
     FadeInDown,
     FadeInUp,
@@ -40,17 +42,25 @@ export default function HomeScreen() {
         startMonitoring,
     } = useUsageStore();
 
-    const { perAppLimits, displayName } = useSettingsStore();
+    const { perAppLimits, displayName, syncEnabled, monitoringEnabled, notificationsEnabled } = useSettingsStore();
+    const { user, isEmailVerified } = useAuthStore();
     const { checkAllPermissions } = usePermissionStore();
     const { isActive: isFocusActive } = useFocusStore();
     
-    const { logs } = useHabitStore();
+    const { logs, habits, getHabitStreak } = useHabitStore();
     const { history } = useWorkStore();
+    const { books, dailyLogs } = useReadingStore();
     
     const [showFocusModal, setShowFocusModal] = useState(false);
     const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const todayHabitsCompleted = logs[todayStr] ? Object.values(logs[todayStr]).filter(status => status === 'completed').length : 0;
+    const todayHabitLogs = Object.values(logs).filter(log => log.logDate === todayStr);
+    const todayHabitsCompleted = todayHabitLogs.filter(log => log.status === 'completed').length;
+    const bestHabitStreak = habits.reduce((max, habit) => Math.max(max, getHabitStreak(habit.id)), 0);
     const todayWorkSessions = history.filter(session => isToday(session.startTime)).length;
+    const todayReading = dailyLogs[todayStr] ?? { pagesRead: 0, durationSeconds: 0 };
+    const activeBooks = books.filter(book => book.status === 'reading').length;
+    const habitCompletionRate = habits.length > 0 ? Math.round((todayHabitsCompleted / habits.length) * 100) : 0;
+    const accountSince = user?.created_at ? format(new Date(user.created_at), 'MMM yyyy') : 'Local';
 
     useEffect(() => {
         const init = async () => {
@@ -92,6 +102,42 @@ export default function HomeScreen() {
                     <Text className="text-3xl font-bold text-foreground tracking-tight">
                         Hello, {displayName || 'Guardian'}
                     </Text>
+                </Animated.View>
+
+                {/* Account Snapshot */}
+                <Animated.View
+                    entering={FadeInDown.delay(160).springify()}
+                    className="px-4 mb-6"
+                >
+                    <View className="bg-card border border-border/80 p-5 rounded-[32px] shadow-sm">
+                        <View className="flex-row items-center gap-4 mb-5">
+                            <View className="w-14 h-14 bg-cyan-500/10 rounded-2xl items-center justify-center border border-cyan-500/20">
+                                <User size={24} color="#06b6d4" />
+                            </View>
+                            <View className="flex-1">
+                                <Text className="text-lg font-black text-foreground" numberOfLines={1}>
+                                    {displayName || user?.user_metadata?.display_name || 'Guardian User'}
+                                </Text>
+                                <View className="flex-row items-center gap-1.5 mt-1">
+                                    <Mail size={12} color="#64748b" />
+                                    <Text className="text-xs text-muted-foreground font-semibold" numberOfLines={1}>
+                                        {user?.email ?? 'Not signed in'}
+                                    </Text>
+                                </View>
+                            </View>
+                            <View className={`px-3 py-1 rounded-full ${isEmailVerified ? 'bg-emerald-500/10' : 'bg-orange-500/10'}`}>
+                                <Text className={`text-[10px] font-black uppercase ${isEmailVerified ? 'text-emerald-500' : 'text-orange-500'}`}>
+                                    {isEmailVerified ? 'Verified' : 'Verify'}
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View className="flex-row gap-2">
+                            <AccountChip icon={Cloud} label="Sync" value={syncEnabled ? 'On' : 'Off'} active={syncEnabled} />
+                            <AccountChip icon={Shield} label="Monitor" value={monitoringEnabled ? 'On' : 'Off'} active={monitoringEnabled} />
+                            <AccountChip icon={Clock} label="Since" value={accountSince} active />
+                        </View>
+                    </View>
                 </Animated.View>
 
                 {/* Hero Card */}
@@ -176,6 +222,40 @@ export default function HomeScreen() {
                             <Text className="text-xl font-bold text-foreground">{todayWorkSessions}</Text>
                             <Text className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Work Sessions</Text>
                         </View>
+                    </View>
+                </Animated.View>
+
+                {/* Wellness Overview */}
+                <Animated.View
+                    entering={FadeInDown.delay(235).springify()}
+                    className="px-4 mb-8"
+                >
+                    <View className="flex-row items-center justify-between mb-4 px-2">
+                        <Text className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">Whole Wellness</Text>
+                        <Text className="text-xs font-bold text-cyan-500">Today</Text>
+                    </View>
+                    <View className="gap-3">
+                        <DashboardMetric
+                            icon={Target}
+                            color="#10b981"
+                            title="Habit Completion"
+                            value={`${todayHabitsCompleted}/${habits.length}`}
+                            subtitle={`${habitCompletionRate}% of today's tracked habits`}
+                        />
+                        <DashboardMetric
+                            icon={Flame}
+                            color="#f97316"
+                            title="Best Streak"
+                            value={`${bestHabitStreak}d`}
+                            subtitle="Longest current habit streak"
+                        />
+                        <DashboardMetric
+                            icon={BookOpen}
+                            color="#8b5cf6"
+                            title="Reading Progress"
+                            value={`${todayReading.pagesRead} pages`}
+                            subtitle={`${Math.round(todayReading.durationSeconds / 60)} active min • ${activeBooks} active books`}
+                        />
                     </View>
                 </Animated.View>
 
@@ -382,5 +462,36 @@ export default function HomeScreen() {
 
             <DeepFocusModal visible={showFocusModal} onClose={() => setShowFocusModal(false)} />
         </SafeAreaView>
+    );
+}
+
+function AccountChip({ icon: Icon, label, value, active }: { icon: any; label: string; value: string; active: boolean }) {
+    return (
+        <View className={`flex-1 p-3 rounded-2xl border ${active ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-muted/40 border-border/60'}`}>
+            <View className="flex-row items-center gap-1.5 mb-1">
+                <Icon size={12} color={active ? '#06b6d4' : '#64748b'} />
+                <Text className="text-[9px] text-muted-foreground font-black uppercase tracking-wide">{label}</Text>
+            </View>
+            <Text className={`text-xs font-black ${active ? 'text-cyan-500' : 'text-muted-foreground'}`} numberOfLines={1}>
+                {value}
+            </Text>
+        </View>
+    );
+}
+
+function DashboardMetric({ icon: Icon, color, title, value, subtitle }: { icon: any; color: string; title: string; value: string; subtitle: string }) {
+    return (
+        <View className="bg-card border border-border/80 p-4 rounded-3xl flex-row items-center gap-4 shadow-sm">
+            <View className="w-11 h-11 rounded-2xl items-center justify-center" style={{ backgroundColor: `${color}1A` }}>
+                <Icon size={20} color={color} />
+            </View>
+            <View className="flex-1">
+                <View className="flex-row items-center justify-between mb-1">
+                    <Text className="text-sm font-bold text-foreground">{title}</Text>
+                    <Text className="text-sm font-black" style={{ color }}>{value}</Text>
+                </View>
+                <Text className="text-[11px] text-muted-foreground font-medium">{subtitle}</Text>
+            </View>
+        </View>
     );
 }
