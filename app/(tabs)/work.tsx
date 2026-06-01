@@ -3,15 +3,16 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-nativ
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
 import { useWorkStore } from '../../src/store/workStore';
-import { Play, Square, Briefcase, Clock, FileText } from 'lucide-react-native';
+import { Play, Square, Briefcase, Clock, FileText, Plus, CheckCircle } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { PerceivedEffect } from '../../src/types/work';
+import { WorkCardModal } from '../../src/components/WorkCardModal';
 
 export default function WorkScreen() {
     const { colorScheme } = useColorScheme();
     const isDark = colorScheme === 'dark';
     
-    const { activeSession, history, startSession, stopSession } = useWorkStore();
+    const { activeSession, history, cards, startSession, startCard, completeCard, stopSession } = useWorkStore();
     
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState('');
@@ -23,9 +24,10 @@ export default function WorkScreen() {
     const [isFinishing, setIsFinishing] = useState(false);
     const [effect, setEffect] = useState<PerceivedEffect>('neutral');
     const [notes, setNotes] = useState('');
+    const [showCardModal, setShowCardModal] = useState(false);
 
     useEffect(() => {
-        let interval: NodeJS.Timeout;
+        let interval: ReturnType<typeof setInterval> | undefined;
         if (activeSession) {
             // Update immediately
             setElapsedTime(Math.floor((Date.now() - activeSession.startTime) / 1000));
@@ -36,7 +38,9 @@ export default function WorkScreen() {
         } else {
             setElapsedTime(0);
         }
-        return () => clearInterval(interval);
+        return () => {
+            if (interval) clearInterval(interval);
+        };
     }, [activeSession]);
 
     const formatTime = (totalSeconds: number) => {
@@ -83,7 +87,15 @@ export default function WorkScreen() {
     return (
         <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-neutral-50'}`} edges={['top']}>
             <View className={`px-6 pt-6 pb-4 ${isDark ? 'bg-neutral-950' : 'bg-white'} border-b ${isDark ? 'border-neutral-900' : 'border-neutral-200'}`}>
-                <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-neutral-900'}`}>Work</Text>
+                <View className="flex-row items-center justify-between">
+                    <View>
+                        <Text className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-neutral-900'}`}>Work</Text>
+                        <Text className={`text-sm mt-1 ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`}>Plan cards, estimate time, track delivery</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setShowCardModal(true)} className="w-10 h-10 rounded-full bg-cyan-500 items-center justify-center">
+                        <Plus size={22} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <ScrollView className="flex-1 px-4 pt-6">
@@ -173,6 +185,50 @@ export default function WorkScreen() {
                     </View>
                 )}
 
+                <Text className={`text-xs font-bold uppercase tracking-wider mb-4 ml-2 ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`}>Work Cards</Text>
+
+                {cards.filter(card => card.status !== 'archived').length === 0 ? (
+                    <View className={`p-6 rounded-2xl mb-8 border items-center ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
+                        <Briefcase size={32} color={isDark ? '#404040' : '#d4d4d4'} />
+                        <Text className={`text-sm mt-3 text-center ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`}>Create a work card to plan outcomes and track actual time.</Text>
+                    </View>
+                ) : (
+                    <View className="mb-8">
+                        {cards.filter(card => card.status !== 'archived').map(card => {
+                            const estimateSeconds = card.estimatedMinutes * 60;
+                            const progress = estimateSeconds > 0 ? Math.min(100, (card.actualSeconds / estimateSeconds) * 100) : 0;
+                            const isComplete = card.status === 'completed';
+                            return (
+                                <View key={card.id} className={`p-4 mb-3 rounded-2xl border ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
+                                    <View className="flex-row items-start justify-between gap-3">
+                                        <View className="flex-1">
+                                            <Text className={`text-base font-black ${isDark ? 'text-white' : 'text-neutral-900'}`}>{card.title}</Text>
+                                            <Text className={`text-xs mt-1 ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`}>
+                                                Est. {card.estimatedMinutes}m • Actual {Math.round(card.actualSeconds / 60)}m{card.dueAt ? ` • Due ${format(card.dueAt, 'MMM d, h:mm a')}` : ''}
+                                            </Text>
+                                        </View>
+                                        <TouchableOpacity onPress={() => completeCard(card.id)} className={`w-9 h-9 rounded-xl items-center justify-center ${isComplete ? 'bg-emerald-500' : 'bg-neutral-200 dark:bg-neutral-800'}`}>
+                                            <CheckCircle size={18} color={isComplete ? '#fff' : isDark ? '#fff' : '#111'} />
+                                        </TouchableOpacity>
+                                    </View>
+                                    <View className={`h-1.5 rounded-full mt-4 overflow-hidden ${isDark ? 'bg-neutral-800' : 'bg-neutral-100'}`}>
+                                        <View className="h-full bg-cyan-500" style={{ width: `${Math.max(2, progress)}%` }} />
+                                    </View>
+                                    {card.description && <Text className={`text-xs mt-3 ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>{card.description}</Text>}
+                                    <TouchableOpacity
+                                        onPress={() => startCard(card.id)}
+                                        disabled={!!activeSession || isComplete}
+                                        className={`mt-4 py-3 rounded-xl flex-row items-center justify-center ${activeSession || isComplete ? isDark ? 'bg-neutral-800' : 'bg-neutral-200' : 'bg-cyan-500'}`}
+                                    >
+                                        <Play size={16} color={activeSession || isComplete ? '#71717a' : '#fff'} fill={activeSession || isComplete ? 'none' : '#fff'} />
+                                        <Text className={`ml-2 font-bold ${activeSession || isComplete ? 'text-neutral-500' : 'text-white'}`}>Start Card Work</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            );
+                        })}
+                    </View>
+                )}
+
                 {/* History List */}
                 <Text className={`text-xs font-bold uppercase tracking-wider mb-4 ml-2 ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`}>Recent Sessions</Text>
                 
@@ -219,6 +275,7 @@ export default function WorkScreen() {
                 
                 <View className="h-10" />
             </ScrollView>
+            <WorkCardModal visible={showCardModal} onClose={() => setShowCardModal(false)} />
         </SafeAreaView>
     );
 }

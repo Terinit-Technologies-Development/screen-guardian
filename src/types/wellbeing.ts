@@ -9,6 +9,7 @@ export interface AppClassification {
   isDoomscrollRisk: boolean;
   heightenedRestriction: boolean;
   dailyTargetMinutes?: number;
+  stateEffects?: Record<string, Partial<WellbeingEffects>>;
   updatedAt: number;
 }
 

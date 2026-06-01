@@ -37,6 +37,14 @@ const defaultStates: WellbeingState[] = [
     createdAt: Date.now(),
     updatedAt: Date.now(),
   },
+  {
+    id: 'lock-in',
+    label: 'Lock-IN',
+    isActive: false,
+    effects: { screenTime: -1.8, habits: 1.4, reading: 1.2, gaming: -0.5, social: -2 },
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
 ];
 
 interface WellbeingStore {
@@ -66,6 +74,7 @@ export const useWellbeingStore = create<WellbeingStore>()(
           isDoomscrollRisk: updates.isDoomscrollRisk ?? current?.isDoomscrollRisk ?? false,
           heightenedRestriction: updates.heightenedRestriction ?? current?.heightenedRestriction ?? false,
           dailyTargetMinutes: updates.dailyTargetMinutes ?? current?.dailyTargetMinutes,
+          stateEffects: updates.stateEffects ?? current?.stateEffects,
           updatedAt: now,
         };
 
@@ -84,6 +93,7 @@ export const useWellbeingStore = create<WellbeingStore>()(
             is_doomscroll_risk: next.isDoomscrollRisk,
             heightened_restriction: next.heightenedRestriction,
             daily_target_minutes: next.dailyTargetMinutes ?? null,
+            state_effects: next.stateEffects ?? {},
             updated_at: new Date(now).toISOString(),
           }, { onConflict: 'user_id,app_id' });
         } catch (e) {
@@ -128,6 +138,7 @@ export const useWellbeingStore = create<WellbeingStore>()(
                 isDoomscrollRisk: row.is_doomscroll_risk,
                 heightenedRestriction: row.heightened_restriction,
                 dailyTargetMinutes: row.daily_target_minutes ?? undefined,
+                stateEffects: row.state_effects ?? undefined,
                 updatedAt: new Date(row.updated_at).getTime(),
               };
             }
@@ -140,15 +151,20 @@ export const useWellbeingStore = create<WellbeingStore>()(
             .eq('user_id', session.user.id);
 
           if (stateRows && stateRows.length > 0) {
+            const cloudStates = stateRows.map(row => ({
+              id: row.id,
+              label: row.label,
+              isActive: row.is_active,
+              effects: { ...defaultEffects, ...(row.effects ?? {}) },
+              createdAt: new Date(row.created_at).getTime(),
+              updatedAt: new Date(row.updated_at).getTime(),
+            }));
+            const mergedStates = [
+              ...cloudStates,
+              ...defaultStates.filter(defaultState => !cloudStates.some(state => state.label === defaultState.label)),
+            ];
             set({
-              states: stateRows.map(row => ({
-                id: row.id,
-                label: row.label,
-                isActive: row.is_active,
-                effects: { ...defaultEffects, ...(row.effects ?? {}) },
-                createdAt: new Date(row.created_at).getTime(),
-                updatedAt: new Date(row.updated_at).getTime(),
-              })),
+              states: mergedStates,
             });
           }
         } catch (e) {
