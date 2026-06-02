@@ -22,6 +22,13 @@
 - JS allApps merges installed apps with usage-stats-seen apps.
 - Fixed configurable app loading so all installed apps are visible.
 
+### Cloud Sync & Data
+- Added state_planner_entries and state_planner_patterns Supabase tables with RLS policies.
+- Added active_planner_state column to user_settings for persistent active state.
+- State planner data now hydrates from cloud on login via syncAllFromCloud.
+- Deleting a recurring pattern now cleans up its generated calendar entries.
+- Added hermes-compiler for standalone release APK builds on Windows.
+
 ### Build & Bug Fixes
 - Standalone release APK builds without Metro dev server using hermes-compiler for Windows bundling.
 - Fixed release crash: AppearanceModule.setColorScheme NullPointerException by resolving system theme to device color scheme.
