@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { ExpoConfig, ConfigContext } from 'expo/config';
+import { ConfigContext } from 'expo/config';
 
 /**
  * Dynamic Expo config that reads environment variables at build time.
@@ -10,7 +10,7 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
  * 2. Expose it via `extra` below
  * 3. Add a typed accessor in src/config/env.ts
  */
-export default ({ config }: ConfigContext): ExpoConfig => ({
+export default ({ config }: ConfigContext) => ({
   ...config,
   name: 'Screen Guardian',
   slug: 'screen-guardian',
@@ -19,7 +19,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
-  newArchEnabled: false,
+  ...({ newArchEnabled: false } as { newArchEnabled: boolean }),
   splash: {
     image: './assets/splash-icon.png',
     resizeMode: 'contain',
@@ -41,7 +41,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/favicon.png',
     bundler: 'metro',
   },
-  plugins: ['expo-router'],
+  plugins: ['expo-router', 'expo-status-bar', 'expo-web-browser'],
   experiments: {
     typedRoutes: true,
   },

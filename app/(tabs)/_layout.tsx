@@ -46,56 +46,56 @@ export default function TabLayout() {
                 name="index"
                 options={{
                     title: 'Home',
-                    tabBarIcon: ({ color }: { color: string }) => <Home size={22} color={color} />,
+                    tabBarIcon: ({ color }) => <Home size={22} color={String(color)} />,
                 }}
             />
             <Tabs.Screen
                 name="apps"
                 options={{
                     title: 'Apps',
-                    tabBarIcon: ({ color }: { color: string }) => <Smartphone size={22} color={color} />,
+                    tabBarIcon: ({ color }) => <Smartphone size={22} color={String(color)} />,
                 }}
             />
             <Tabs.Screen
                 name="habits"
                 options={{
                     title: 'Habits',
-                    tabBarIcon: ({ color }: { color: string }) => <Dumbbell size={22} color={color} />,
+                    tabBarIcon: ({ color }) => <Dumbbell size={22} color={String(color)} />,
                 }}
             />
             <Tabs.Screen
                 name="reading"
                 options={{
                     title: 'Reading',
-                    tabBarIcon: ({ color }: { color: string }) => <BookOpen size={22} color={color} />,
+                    tabBarIcon: ({ color }) => <BookOpen size={22} color={String(color)} />,
                 }}
             />
             <Tabs.Screen
                 name="wellbeing"
                 options={{
                     title: 'Wellbeing',
-                    tabBarIcon: ({ color }: { color: string }) => <HeartPulse size={22} color={color} />,
+                    tabBarIcon: ({ color }) => <HeartPulse size={22} color={String(color)} />,
                 }}
             />
             <Tabs.Screen
                 name="achievements"
                 options={{
                     title: 'Achievements',
-                    tabBarIcon: ({ color }: { color: string }) => <Trophy size={22} color={color} />,
+                    tabBarIcon: ({ color }) => <Trophy size={22} color={String(color)} />,
                 }}
             />
             <Tabs.Screen
                 name="work"
                 options={{
                     title: 'Work',
-                    tabBarIcon: ({ color }: { color: string }) => <BarChart2 size={22} color={color} />,
+                    tabBarIcon: ({ color }) => <BarChart2 size={22} color={String(color)} />,
                 }}
             />
             <Tabs.Screen
                 name="settings"
                 options={{
                     title: 'Settings',
-                    tabBarIcon: ({ color }: { color: string }) => <Settings size={22} color={color} />,
+                    tabBarIcon: ({ color }) => <Settings size={22} color={String(color)} />,
                 }}
             />
         </Tabs>
