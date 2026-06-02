@@ -7,7 +7,7 @@ import { useColorScheme } from 'nativewind';
 import { StatusBar } from 'expo-status-bar';
 import '../src/global.css';
 
-import { Text, View } from 'react-native';
+import { Appearance, Text, View } from 'react-native';
 import { useRouter, useSegments } from 'expo-router';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -20,10 +20,18 @@ export default function RootLayout() {
     const segments = useSegments();
 
     useEffect(() => {
-        if (theme) {
-            setColorScheme(theme);
-        }
-    }, [theme]);
+        const applyTheme = () => {
+            const resolvedTheme = theme === 'system' ? (Appearance.getColorScheme() ?? 'light') : theme;
+            setColorScheme(resolvedTheme);
+        };
+
+        applyTheme();
+
+        if (theme !== 'system') return;
+
+        const subscription = Appearance.addChangeListener(applyTheme);
+        return () => subscription.remove();
+    }, [theme, setColorScheme]);
 
     useEffect(() => {
         // Silently handle keep-awake activation to prevent uncaught promise errors

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Smartphone, Home, BarChart2, Settings, Dumbbell, BookOpen, HeartPulse, Trophy } from 'lucide-react-native';
+import { Smartphone, Home, BarChart2, Settings, Dumbbell, BookOpen, HeartPulse, Trophy, CalendarDays } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -84,11 +84,18 @@ export default function TabLayout() {
                     tabBarIcon: ({ color }) => <Trophy size={22} color={String(color)} />,
                 }}
             />
-            <Tabs.Screen
+<Tabs.Screen
                 name="work"
                 options={{
                     title: 'Work',
                     tabBarIcon: ({ color }) => <BarChart2 size={22} color={String(color)} />,
+                }}
+            />
+            <Tabs.Screen
+                name="planner"
+                options={{
+                    title: 'Planner',
+                    tabBarIcon: ({ color }) => <CalendarDays size={22} color={String(color)} />,
                 }}
             />
             <Tabs.Screen
