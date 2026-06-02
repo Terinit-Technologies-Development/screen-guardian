@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert, Modal } from 'react-native';
-import { Calendar, Clock, Lock, Unlock, Info, ChevronLeft, ChevronRight, Plus, X, ShieldAlert, ShieldCheck, ShieldOff, Edit3, Trash2 } from 'lucide-react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Calendar, Clock, Lock, Unlock, Info, ChevronLeft, ChevronRight, Plus, X, ShieldAlert, ShieldCheck, ShieldOff, Edit3, Trash2, CalendarDays } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useStatePlannerStore } from '../../src/store/statePlannerStore';
 import { PLANNER_STATES, PlannerStateId, PlannerEntry, STATE_CATEGORY_RESTRICTIONS, CategoryRestriction, FunctionalBalance, AppOverride, canModifyEntry, canCancelState } from '../../src/types/statePlanner';
@@ -43,6 +44,7 @@ function BalanceRing({ score, label, color }: { score: number; label: string; co
 export default function StatePlannerScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const insets = useSafeAreaInsets();
   const entries = useStatePlannerStore(s => s.entries);
   const recurringPatterns = useStatePlannerStore(s => s.recurringPatterns);
   const setEntry = useStatePlannerStore(s => s.setEntry);
@@ -142,11 +144,20 @@ export default function StatePlannerScreen() {
   }, [todayState]);
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerStyle={{ paddingBottom: 120 }}>
-      <View className="px-4 pt-4">
-        <Text className="text-2xl font-bold text-foreground">State Planner</Text>
-        <Text className="text-sm text-muted-foreground mt-1">Plan your month. Lock in focus. Recover intentionally.</Text>
+    <SafeAreaView className={`flex-1 ${isDark ? 'bg-neutral-950' : 'bg-neutral-50'}`} edges={['top']}>
+      <View className={`px-6 pt-6 pb-4 ${isDark ? 'bg-neutral-950' : 'bg-white'} border-b ${isDark ? 'border-neutral-900' : 'border-neutral-200'}`}>
+        <View className="flex-row items-center justify-between">
+          <View>
+            <Text className={`text-3xl font-black ${isDark ? 'text-white' : 'text-neutral-900'}`}>State Planner</Text>
+            <Text className={`text-sm font-semibold mt-1 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>Plan your month. Lock in focus. Recover intentionally.</Text>
+          </View>
+          <View className={`w-12 h-12 rounded-2xl items-center justify-center border ${isDark ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-cyan-50 border-cyan-200'}`}>
+            <CalendarDays size={24} color="#06b6d4" />
+          </View>
+        </View>
       </View>
+
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }}>
 
       <View className="px-4 pt-4 flex-row items-center justify-between">
         <TouchableOpacity onPress={() => setCurrentMonth(m => ({ ...m, month: m.month === 0 ? 11 : m.month - 1, year: m.month === 0 ? m.year - 1 : m.year }))} className="p-2">
@@ -365,7 +376,7 @@ export default function StatePlannerScreen() {
 
       <Modal visible={showPatternModal} animationType="slide" transparent>
         <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-background rounded-t-3xl p-6 border-t border-border" style={{ maxHeight: '80%' }}>
+          <View className="bg-background rounded-t-3xl p-6 border-t border-border" style={{ maxHeight: '80%', paddingBottom: Math.max(24, insets.bottom + 12) }}>
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-lg font-bold text-foreground">New Recurring Pattern</Text>
               <TouchableOpacity onPress={() => setShowPatternModal(false)}><X size={20} color={isDark ? '#fff' : '#000'} /></TouchableOpacity>
@@ -405,5 +416,6 @@ export default function StatePlannerScreen() {
         </View>
       </Modal>
     </ScrollView>
+    </SafeAreaView>
   );
 }

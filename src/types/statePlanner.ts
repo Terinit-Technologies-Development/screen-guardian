@@ -67,8 +67,8 @@ export const STATE_CATEGORY_RESTRICTIONS: Record<PlannerStateId, CategoryRestric
   'lock-in': [
     { category: 'doomscroll', maxDailyMinutes: 15, maxSessions: 2, cooldownBetweenMinutes: 60, allowed: true, tooltip: 'Doomscroll-risk apps are hard-limited to 15 min/day in Lock-IN. Only 2 short check-in windows.' },
     { category: 'social', maxDailyMinutes: 15, maxSessions: 2, cooldownBetweenMinutes: 60, allowed: true, tooltip: 'Social apps: 15 min/day, max 2 sessions, 1-hour cooldown between uses.' },
-    { category: 'game', maxDailyMinutes: 0, maxSessions: 0, cooldownBetweenMinutes: 0, allowed: false, tooltip: 'Games are completely blocked during Lock-IN.' },
-    { category: 'messaging', maxDailyMinutes: 30, maxSessions: 5, cooldownBetweenMinutes: 15, allowed: true, tooltip: 'Messaging apps: 30 min/day for essential communication only.' },
+    { category: 'game', maxDailyMinutes: 15, maxSessions: 1, cooldownBetweenMinutes: 120, allowed: true, tooltip: 'Games: 1 session of up to 15 min as a break reward during Lock-IN.' },
+    { category: 'messaging', maxDailyMinutes: 60, maxSessions: 8, cooldownBetweenMinutes: 5, allowed: true, tooltip: 'Messaging apps: 60 min/day. Video calls & essential communication allowed.' },
     { category: 'entertainment', maxDailyMinutes: 15, maxSessions: 2, cooldownBetweenMinutes: 60, allowed: true, tooltip: 'Entertainment: 15 min/day, 2 sessions, for brief mental breaks.' },
     { category: 'productive', maxDailyMinutes: 9999, maxSessions: 999, cooldownBetweenMinutes: 0, allowed: true, tooltip: 'Productivity apps are unrestricted during Lock-IN.' },
     { category: 'reading', maxDailyMinutes: 9999, maxSessions: 999, cooldownBetweenMinutes: 0, allowed: true, tooltip: 'Reading apps are unrestricted during Lock-IN.' },
@@ -78,8 +78,8 @@ export const STATE_CATEGORY_RESTRICTIONS: Record<PlannerStateId, CategoryRestric
   'deep-work': [
     { category: 'doomscroll', maxDailyMinutes: 30, maxSessions: 3, cooldownBetweenMinutes: 45, allowed: true, tooltip: 'Doomscroll-risk apps: 30 min/day, 3 sessions, 45-min cooldown.' },
     { category: 'social', maxDailyMinutes: 30, maxSessions: 3, cooldownBetweenMinutes: 45, allowed: true, tooltip: 'Social apps: 30 min/day, limited check-ins only.' },
-    { category: 'game', maxDailyMinutes: 15, maxSessions: 1, cooldownBetweenMinutes: 120, allowed: true, tooltip: 'Games: 1 session of up to 15 min as a break reward.' },
-    { category: 'messaging', maxDailyMinutes: 45, maxSessions: 6, cooldownBetweenMinutes: 10, allowed: true, tooltip: 'Messaging: 45 min/day for essential communication.' },
+    { category: 'game', maxDailyMinutes: 30, maxSessions: 2, cooldownBetweenMinutes: 60, allowed: true, tooltip: 'Games: 2 sessions of up to 30 min total as a break reward during Deep Work.' },
+    { category: 'messaging', maxDailyMinutes: 90, maxSessions: 12, cooldownBetweenMinutes: 5, allowed: true, tooltip: 'Messaging: 90 min/day. Plenty for video calls and essential communication.' },
     { category: 'entertainment', maxDailyMinutes: 30, maxSessions: 2, cooldownBetweenMinutes: 45, allowed: true, tooltip: 'Entertainment: 30 min/day, 2 sessions.' },
     { category: 'productive', maxDailyMinutes: 9999, maxSessions: 999, cooldownBetweenMinutes: 0, allowed: true, tooltip: 'Productivity apps: unrestricted.' },
     { category: 'reading', maxDailyMinutes: 9999, maxSessions: 999, cooldownBetweenMinutes: 0, allowed: true, tooltip: 'Reading apps: unrestricted.' },
@@ -89,7 +89,7 @@ export const STATE_CATEGORY_RESTRICTIONS: Record<PlannerStateId, CategoryRestric
   'balanced': [
     { category: 'doomscroll', maxDailyMinutes: 60, maxSessions: 5, cooldownBetweenMinutes: 20, allowed: true, tooltip: 'Doomscroll-risk apps: 60 min/day cap, 5 sessions, 20-min cooldowns.' },
     { category: 'social', maxDailyMinutes: 60, maxSessions: 5, cooldownBetweenMinutes: 20, allowed: true, tooltip: 'Social apps: 60 min/day, reasonable check-ins.' },
-    { category: 'game', maxDailyMinutes: 60, maxSessions: 3, cooldownBetweenMinutes: 30, allowed: true, tooltip: 'Games: 60 min/day, 3 sessions, 30-min cooldowns.' },
+    { category: 'game', maxDailyMinutes: 90, maxSessions: 4, cooldownBetweenMinutes: 15, allowed: true, tooltip: 'Games: 90 min/day, 4 sessions. Enjoy gaming in a balanced way.' },
     { category: 'messaging', maxDailyMinutes: 9999, maxSessions: 999, cooldownBetweenMinutes: 0, allowed: true, tooltip: 'Messaging apps: unrestricted. Stay connected.' },
     { category: 'entertainment', maxDailyMinutes: 90, maxSessions: 5, cooldownBetweenMinutes: 15, allowed: true, tooltip: 'Entertainment: 90 min/day, 5 sessions.' },
     { category: 'productive', maxDailyMinutes: 9999, maxSessions: 999, cooldownBetweenMinutes: 0, allowed: true, tooltip: 'Productivity apps: unrestricted.' },
