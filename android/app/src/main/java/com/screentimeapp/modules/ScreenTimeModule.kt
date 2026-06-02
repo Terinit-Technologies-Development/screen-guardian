@@ -117,6 +117,7 @@ class ScreenTimeModule(reactContext: ReactApplicationContext) : ReactContextBase
                 if (usageStats.totalTimeInForeground > 0) {
                     val appMap = Arguments.createMap()
                     appMap.putString("packageName", usageStats.packageName)
+                    appMap.putString("appName", getAppName(pm = reactApplicationContext.packageManager, packageName = usageStats.packageName))
                     appMap.putDouble("timeInForeground", usageStats.totalTimeInForeground.toDouble() / 1000) // seconds
                     appsArray.pushMap(appMap)
                     totalTime += usageStats.totalTimeInForeground
@@ -133,10 +134,10 @@ class ScreenTimeModule(reactContext: ReactApplicationContext) : ReactContextBase
     fun getInstalledApps(promise: Promise) {
         val pm = reactApplicationContext.packageManager
         val apps = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            pm.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(0))
+            pm.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(PackageManager.MATCH_DISABLED_COMPONENTS.toLong()))
         } else {
             @Suppress("DEPRECATION")
-            pm.getInstalledApplications(0)
+            pm.getInstalledApplications(PackageManager.MATCH_DISABLED_COMPONENTS)
         }
         val result = Arguments.createArray()
         val launcherPackages = mutableSetOf<String>()
@@ -154,21 +155,68 @@ class ScreenTimeModule(reactContext: ReactApplicationContext) : ReactContextBase
             launcherPackages.add(activity.activityInfo.packageName)
         }
 
+        val recentlyUsedPackages = getRecentlyUsedPackages()
+
         apps
-            .filter { app -> app.enabled && isVisibleApp(pm, app, launcherPackages) }
-            .sortedBy { app -> pm.getApplicationLabel(app).toString().lowercase(Locale.getDefault()) }
+            .filter { app -> isConfigurableApp(pm, app, launcherPackages, recentlyUsedPackages) }
+            .distinctBy { app -> app.packageName }
+            .sortedBy { app -> getAppName(pm, app).lowercase(Locale.getDefault()) }
             .forEach { app ->
                 val appMap = Arguments.createMap()
                 appMap.putString("packageName", app.packageName)
-                appMap.putString("appName", pm.getApplicationLabel(app).toString())
+                appMap.putString("appName", getAppName(pm, app))
+                appMap.putBoolean("hasLauncher", launcherPackages.contains(app.packageName))
+                appMap.putBoolean("seenInUsage", recentlyUsedPackages.contains(app.packageName))
                 result.pushMap(appMap)
             }
         promise.resolve(result)
     }
 
-    private fun isVisibleApp(pm: PackageManager, app: ApplicationInfo, launcherPackages: Set<String>): Boolean {
+    private fun isConfigurableApp(
+        pm: PackageManager,
+        app: ApplicationInfo,
+        launcherPackages: Set<String>,
+        recentlyUsedPackages: Set<String>
+    ): Boolean {
+        if (app.packageName == reactApplicationContext.packageName) return false
+        if (!app.enabled && !recentlyUsedPackages.contains(app.packageName)) return false
         if (launcherPackages.contains(app.packageName)) return true
+        if (recentlyUsedPackages.contains(app.packageName)) return true
         return pm.getLaunchIntentForPackage(app.packageName) != null
+    }
+
+    private fun getRecentlyUsedPackages(): Set<String> {
+        return try {
+            val usageStatsManager = reactApplicationContext.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val endTime = System.currentTimeMillis()
+            val startTime = endTime - 30L * 24L * 60L * 60L * 1000L
+            val stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime)
+            stats
+                ?.filter { it.totalTimeInForeground > 0 }
+                ?.map { it.packageName }
+                ?.toSet()
+                ?: emptySet()
+        } catch (_: SecurityException) {
+            emptySet()
+        }
+    }
+
+    private fun getAppName(pm: PackageManager, app: ApplicationInfo): String {
+        return pm.getApplicationLabel(app).toString().ifBlank { app.packageName }
+    }
+
+    private fun getAppName(pm: PackageManager, packageName: String): String {
+        return try {
+            val app = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                pm.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getApplicationInfo(packageName, 0)
+            }
+            getAppName(pm, app)
+        } catch (_: PackageManager.NameNotFoundException) {
+            packageName
+        }
     }
 
     @ReactMethod

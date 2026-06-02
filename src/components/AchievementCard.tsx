@@ -2,13 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { AchievementDefinition, AchievementProgress, UserAchievement } from '../types/achievements';
 import { AchievementIcon } from './AchievementIcon';
-
-const TIER_LABELS: Record<string, string> = {
-  bronze: 'Bronze',
-  silver: 'Silver',
-  gold: 'Gold',
-  legend: 'Legend',
-};
+import { ACHIEVEMENT_LAYER_LABELS } from '../utils/achievementDefinitions';
 
 export function AchievementCard({
   definition,
@@ -52,7 +46,7 @@ export function AchievementCard({
               {definition.title}
             </Text>
             <Text className="text-[9px] font-black uppercase" style={{ color: unlocked ? definition.color : '#737373' }}>
-              {unlocked ? TIER_LABELS[definition.tier] : progressLabel}
+              {unlocked ? ACHIEVEMENT_LAYER_LABELS[definition.tier] : progressLabel}
             </Text>
           </View>
           <Text className={`text-xs mt-1 leading-4 ${isDark ? 'text-neutral-400' : 'text-neutral-500'}`}>

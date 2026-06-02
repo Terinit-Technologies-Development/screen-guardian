@@ -5,7 +5,7 @@ import { useColorScheme } from 'nativewind';
 import { Flame, ShieldCheck, Sparkles, Target, Trophy } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAchievementStore } from '../../src/store/achievementStore';
-import { ACHIEVEMENTS } from '../../src/utils/achievementDefinitions';
+import { ACHIEVEMENT_LAYER_COLORS, ACHIEVEMENT_LAYER_LABELS, ACHIEVEMENTS } from '../../src/utils/achievementDefinitions';
 import { AchievementCard } from '../../src/components/AchievementCard';
 import { AchievementUnlockToast } from '../../src/components/AchievementUnlockToast';
 
@@ -32,8 +32,13 @@ export default function AchievementsScreen() {
   const metrics = getMetrics();
   const unlockedCount = Object.keys(unlocked).length;
   const completionRatio = ACHIEVEMENTS.length > 0 ? unlockedCount / ACHIEVEMENTS.length : 0;
-  const level = Math.max(1, Math.floor(unlockedCount / 4) + 1);
-  const nextLevelRemaining = Math.max(0, level * 4 - unlockedCount);
+  const highestUnlockedLayer = ACHIEVEMENTS
+    .filter(item => unlocked[item.id])
+    .reduce((max, item) => Math.max(max, Number(item.tier.replace('layer_', ''))), 0);
+  const currentLayer = Math.max(1, highestUnlockedLayer);
+  const nextLayerDefinition = ACHIEVEMENTS.find(item => Number(item.tier.replace('layer_', '')) === currentLayer + 1);
+  const currentTier = `layer_${currentLayer}` as keyof typeof ACHIEVEMENT_LAYER_COLORS;
+  const currentLayerColor = ACHIEVEMENT_LAYER_COLORS[currentTier];
   const nextUnlock = progress
     .filter(item => !item.isUnlocked)
     .sort((a, b) => b.ratio - a.ratio)[0];
@@ -66,17 +71,21 @@ export default function AchievementsScreen() {
             <View className="flex-row items-center justify-between z-10">
               <View className="flex-1 pr-4">
                 <Text className="text-cyan-300 text-[10px] font-black uppercase tracking-[2px]">Intentional Living</Text>
-                <Text className="text-white text-4xl font-black mt-1">Level {level}</Text>
+                <Text className="text-white text-4xl font-black mt-1">{ACHIEVEMENT_LAYER_LABELS[currentTier]}</Text>
                 <Text className="text-neutral-400 text-xs mt-2 leading-5">
-                  {nextLevelRemaining === 0 ? 'Level up is ready.' : `${nextLevelRemaining} more badges until Level ${level + 1}.`}
+                  {highestUnlockedLayer === 0
+                    ? 'Unlock any badge to begin your rank climb.'
+                    : nextLayerDefinition
+                      ? `Next rank starts with ${nextLayerDefinition.title}.`
+                      : 'You are holding the highest current rank layer.'}
                 </Text>
               </View>
-              <View className="w-20 h-20 rounded-[28px] bg-white/10 border border-white/10 items-center justify-center">
-                <Trophy size={36} color="#facc15" />
+              <View className="w-20 h-20 rounded-[28px] bg-white/10 border border-white/10 items-center justify-center" style={{ shadowColor: currentLayerColor, shadowOpacity: 0.45, shadowRadius: 18 }}>
+                <Trophy size={36} color={currentLayerColor} />
               </View>
             </View>
             <View className="h-2 bg-white/10 rounded-full mt-6 overflow-hidden">
-              <View className="h-full bg-cyan-400 rounded-full" style={{ width: `${Math.max(4, completionRatio * 100)}%` }} />
+              <View className="h-full rounded-full" style={{ width: `${Math.max(4, completionRatio * 100)}%`, backgroundColor: currentLayerColor }} />
             </View>
             <View className="flex-row justify-between mt-3">
               <Text className="text-white/50 text-xs font-bold">{unlockedCount}/{ACHIEVEMENTS.length} badges</Text>

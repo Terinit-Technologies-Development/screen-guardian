@@ -40,6 +40,23 @@ interface UsageState {
   loadFromCloud: () => Promise<void>;
 }
 
+function mergeAppsByPackage(existingApps: any[], incomingApps: any[]) {
+  const appsByPackage = new Map<string, any>();
+  for (const app of existingApps) {
+    if (app?.packageName) appsByPackage.set(app.packageName, app);
+  }
+  for (const app of incomingApps) {
+    if (!app?.packageName) continue;
+    const current = appsByPackage.get(app.packageName);
+    appsByPackage.set(app.packageName, {
+      ...current,
+      ...app,
+      appName: app.appName || current?.appName || app.packageName,
+    });
+  }
+  return Array.from(appsByPackage.values()).sort((a, b) => (a.appName ?? a.packageName).localeCompare(b.appName ?? b.packageName));
+}
+
 export const useUsageStore = create<UsageState>()(
   persist(
     (set, get) => ({
@@ -104,6 +121,7 @@ export const useUsageStore = create<UsageState>()(
           set({
             totalScreenTime: data.totalScreenTime,
             todayApps: data.apps,
+            allApps: mergeAppsByPackage(get().allApps, data.apps),
             lastUpdated: Date.now(),
             isLoading: false,
           });
@@ -121,9 +139,10 @@ export const useUsageStore = create<UsageState>()(
       loadAllApps: async () => {
         try {
           const apps = await ScreenTimeMonitor.getInstalledApps();
-          set({ allApps: apps });
+          set(state => ({ allApps: mergeAppsByPackage(apps, state.todayApps) }));
         } catch (error) {
           console.error('Failed to load all apps:', error);
+          set(state => ({ allApps: mergeAppsByPackage(state.allApps, state.todayApps) }));
         }
       },
 
@@ -247,7 +266,7 @@ export const useUsageStore = create<UsageState>()(
             .select('*')
             .eq('user_id', session.user.id)
             .order('log_date', { ascending: false })
-            .limit(30);
+            .limit(365);
 
           if (!logsError && dailyLogs && dailyLogs.length > 0) {
             const weeklySummaries: DailySummary[] = dailyLogs.map(log => ({

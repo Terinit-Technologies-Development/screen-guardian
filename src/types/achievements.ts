@@ -7,7 +7,16 @@ export type AchievementCategory =
   | 'screen_time'
   | 'planning';
 
-export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'legend';
+export type AchievementTier =
+  | 'layer_1'
+  | 'layer_2'
+  | 'layer_3'
+  | 'layer_4'
+  | 'layer_5'
+  | 'layer_6'
+  | 'layer_7'
+  | 'layer_8'
+  | 'layer_9';
 
 export type AchievementMetricKey =
   | 'totalHabitCompletions'

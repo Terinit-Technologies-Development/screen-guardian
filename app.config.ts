@@ -31,7 +31,7 @@ export default ({ config }: ConfigContext) => ({
   },
   android: {
     package: process.env.ANDROID_PACKAGE_NAME ?? 'com.screentimeapp',
-    permissions: ['WAKE_LOCK'],
+    permissions: ['WAKE_LOCK', 'PACKAGE_USAGE_STATS', 'QUERY_ALL_PACKAGES'],
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',
