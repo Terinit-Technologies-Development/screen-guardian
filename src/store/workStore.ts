@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WorkSession, PerceivedEffect, WorkCard } from '../types/work';
 import * as Crypto from 'expo-crypto';
 import { supabase } from '../lib/supabase';
+import { queueAchievementEvaluation } from '../services/achievementEvaluationService';
 
 interface WorkState {
     activeSession: WorkSession | null;
@@ -42,6 +43,7 @@ export const useWorkStore = create<WorkState>()(
                     updatedAt: now,
                 };
                 set(state => ({ cards: [newCard, ...state.cards] }));
+                queueAchievementEvaluation();
 
                 try {
                     const { data: { session } } = await supabase.auth.getSession();
@@ -98,6 +100,7 @@ export const useWorkStore = create<WorkState>()(
 
             completeCard: async (id) => {
                 await get().updateCard(id, { status: 'completed' });
+                queueAchievementEvaluation();
             },
 
             startSession: (title, category, description, workCardId) => {
@@ -144,6 +147,7 @@ export const useWorkStore = create<WorkState>()(
                         )
                         : state.cards,
                 }));
+                queueAchievementEvaluation();
 
                 if (completedSession.workCardId) {
                     const card = get().cards.find(c => c.id === completedSession.workCardId);

@@ -7,6 +7,7 @@ import { AddHabitModal } from '../../src/components/AddHabitModal';
 import { Plus, Check, X, Flame } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { Habit, HabitLogStatus } from '../../src/types/habits';
+import { StreakBadge } from '../../src/components/StreakBadge';
 
 export default function HabitsScreen() {
     const { colorScheme } = useColorScheme();
@@ -57,23 +58,7 @@ export default function HabitsScreen() {
                         )}
                     </View>
                     <View className="flex-row items-center mt-1 gap-3">
-                        <View className="flex-row items-center gap-1">
-                            <Flame
-                                size={14}
-                                color={streak > 0 ? '#f97316' : isDark ? '#525252' : '#a3a3a3'}
-                            />
-                            <Text
-                                className={`text-xs font-bold ${
-                                    streak > 0
-                                        ? 'text-orange-500'
-                                        : isDark
-                                        ? 'text-neutral-500'
-                                        : 'text-neutral-400'
-                                }`}
-                            >
-                                {streak}d
-                            </Text>
-                        </View>
+                        <StreakBadge streak={streak} type={habit.type} compact />
                         <View
                             className={`px-2 py-0.5 rounded-full ${
                                 isBuild

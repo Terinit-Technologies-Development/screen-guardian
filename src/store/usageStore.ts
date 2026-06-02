@@ -7,6 +7,7 @@ import ScreenTimeMonitor from '../native/ScreenTimeMonitor';
 import MockDataService from '../services/MockDataService';
 import { supabase } from '../lib/supabase';
 import { ENV } from '../config/env';
+import { queueAchievementEvaluation } from '../services/achievementEvaluationService';
 
 interface UsageState {
   totalScreenTime: number;
@@ -106,6 +107,7 @@ export const useUsageStore = create<UsageState>()(
             lastUpdated: Date.now(),
             isLoading: false,
           });
+          queueAchievementEvaluation();
           get().checkLimitExceeded();
 
           // Sync to cloud after loading

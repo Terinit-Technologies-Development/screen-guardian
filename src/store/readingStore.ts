@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { ReadingBook, ReadingDailyLog, ReadingSession } from '../types/reading';
 import { useHabitStore } from './habitStore';
+import { queueAchievementEvaluation } from '../services/achievementEvaluationService';
 
 const BOOK_DIR = `${FileSystem.documentDirectory ?? ''}books/`;
 
@@ -163,6 +164,7 @@ export const useReadingStore = create<ReadingState>()(
                         },
                     };
                 });
+                queueAchievementEvaluation();
 
                 await useHabitStore.getState().recordReadingProgress(date, pagesRead, durationSeconds);
 

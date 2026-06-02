@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { AppClassification, calculateAppStateEffects, FunctionalCategory, WellbeingEffects, WellbeingState } from '../types/wellbeing';
+import { queueAchievementEvaluation } from '../services/achievementEvaluationService';
 
 const defaultEffects: WellbeingEffects = {
   screenTime: -1,
@@ -83,6 +84,7 @@ export const useWellbeingStore = create<WellbeingStore>()(
         );
 
         set(state => ({ classifications: { ...state.classifications, [appId]: next } }));
+        queueAchievementEvaluation();
 
         try {
           const { data: { session } } = await supabase.auth.getSession();

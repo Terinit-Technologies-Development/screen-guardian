@@ -5,6 +5,7 @@ import { Habit, HabitLog, HabitLogStatus, HabitLogSource, DayOfWeek } from '../t
 import * as Crypto from 'expo-crypto';
 import { supabase } from '../lib/supabase';
 import { format, subDays, parseISO } from 'date-fns';
+import { queueAchievementEvaluation } from '../services/achievementEvaluationService';
 
 const DAY_MAP: Record<number, DayOfWeek> = {
     0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat',
@@ -49,6 +50,7 @@ export const useHabitStore = create<HabitState>()(
                 set(state => ({
                     habits: [...state.habits, newHabit],
                 }));
+                queueAchievementEvaluation();
 
                 try {
                     const { data: { session } } = await supabase.auth.getSession();
@@ -149,6 +151,7 @@ export const useHabitStore = create<HabitState>()(
                 set(state => ({
                     logs: { ...state.logs, [key]: newLog },
                 }));
+                queueAchievementEvaluation();
 
                 try {
                     const { data: { session } } = await supabase.auth.getSession();

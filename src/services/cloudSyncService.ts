@@ -8,6 +8,7 @@ import { useUsageStore } from '../store/usageStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useReadingStore } from '../store/readingStore';
 import { useWellbeingStore } from '../store/wellbeingStore';
+import { useAchievementStore } from '../store/achievementStore';
 
 export async function syncAllFromCloud() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -23,5 +24,8 @@ export async function syncAllFromCloud() {
     useSettingsStore.getState().loadFromCloud(),
     useReadingStore.getState().loadFromCloud(),
     useWellbeingStore.getState().loadFromCloud(),
+    useAchievementStore.getState().loadFromCloud(),
   ]);
+
+  await useAchievementStore.getState().evaluateAchievements();
 }

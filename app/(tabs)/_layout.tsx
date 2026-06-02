@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Smartphone, Home, BarChart2, Settings, Dumbbell, BookOpen, HeartPulse } from 'lucide-react-native';
+import { Smartphone, Home, BarChart2, Settings, Dumbbell, BookOpen, HeartPulse, Trophy } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,11 +13,32 @@ export default function TabLayout() {
         <Tabs screenOptions={{
             tabBarActiveTintColor: '#06b6d4',
             tabBarInactiveTintColor: isDark ? '#525252' : '#a3a3a3',
+            tabBarShowLabel: false,
             tabBarStyle: {
-                backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
-                borderTopColor: isDark ? '#262626' : '#e5e5e5',
-                height: 50 + insets.bottom,
-                paddingBottom: insets.bottom > 0 ? insets.bottom : 5,
+                position: 'absolute',
+                left: 16,
+                right: 16,
+                bottom: Math.max(10, insets.bottom + 4),
+                backgroundColor: isDark ? 'rgba(10, 10, 10, 0.94)' : 'rgba(255, 255, 255, 0.94)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.1)',
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.1)',
+                borderWidth: 1,
+                borderTopWidth: 1,
+                height: 62,
+                borderRadius: 31,
+                paddingTop: 8,
+                paddingBottom: 8,
+                paddingHorizontal: 8,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 14 },
+                shadowOpacity: isDark ? 0.5 : 0.16,
+                shadowRadius: 24,
+                elevation: 18,
+            },
+            tabBarItemStyle: {
+                height: 46,
+                borderRadius: 23,
+                marginHorizontal: 1,
             },
             headerShown: false,
         }}>
@@ -54,6 +75,13 @@ export default function TabLayout() {
                 options={{
                     title: 'Wellbeing',
                     tabBarIcon: ({ color }: { color: string }) => <HeartPulse size={22} color={color} />,
+                }}
+            />
+            <Tabs.Screen
+                name="achievements"
+                options={{
+                    title: 'Achievements',
+                    tabBarIcon: ({ color }: { color: string }) => <Trophy size={22} color={color} />,
                 }}
             />
             <Tabs.Screen
