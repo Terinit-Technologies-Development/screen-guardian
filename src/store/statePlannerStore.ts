@@ -121,8 +121,32 @@ export const useStatePlannerStore = create<StatePlannerStore>()(
       },
 
       removeRecurringPattern: (id) => {
+        const pattern = get().recurringPatterns.find(p => p.id === id);
         set(state => ({ recurringPatterns: state.recurringPatterns.filter(p => p.id !== id) }));
         deletePattern(id);
+
+        if (pattern) {
+          const today = new Date();
+          const start = new Date(pattern.startDate);
+          const end = pattern.endDate ? new Date(pattern.endDate) : new Date(today.getFullYear(), today.getMonth() + 3, 0);
+          const { entries } = get();
+          const cleaned = { ...entries };
+
+          for (let i = 0; i < 90; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() + i);
+            if (d < start || d > end) continue;
+            if (!pattern.daysOfWeek.includes(d.getDay())) continue;
+            const dateStr = d.toISOString().split('T')[0];
+            const existing = cleaned[dateStr];
+            if (existing && !existing.locked && existing.stateId === pattern.stateId) {
+              delete cleaned[dateStr];
+            }
+          }
+
+          set({ entries: cleaned });
+          get().applyRecurringPatterns();
+        }
       },
 
       applyRecurringPatterns: () => {
