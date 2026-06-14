@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, AppState } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, AppState, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSettingsStore } from '../../src/store/settingsStore';
 import { formatTime } from '../../src/utils/formatters';
@@ -14,15 +14,28 @@ import {
     ChevronRight,
     CircleHelp,
     Info,
-    Smartphone
+    Smartphone,
+    User,
+    Cloud,
+    Save,
+    LogOut,
+    Mail
 } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { useColorScheme } from 'nativewind';
+import { useAuthStore } from '../../src/store/authStore';
+import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
+    const router = useRouter();
     const { colorScheme } = useColorScheme();
+    const { user, signOut } = useAuthStore();
     const {
+        displayName,
+        setDisplayName,
+        syncEnabled,
+        setSyncEnabled,
         dailyScreenTimeLimit,
         setDailyLimit,
         exerciseDifficulty,
@@ -36,8 +49,19 @@ export default function SettingsScreen() {
         resetSettings,
     } = useSettingsStore();
 
+    const [tempName, setTempName] = React.useState(displayName);
+
+    const handleSaveName = () => {
+        setDisplayName(tempName);
+    };
+
+    const handleSignOut = async () => {
+        await signOut();
+        router.replace('/auth/login' as any);
+    };
+
     return (
-        <SafeAreaView className="flex-1 bg-background">
+        <SafeAreaView className="flex-1 bg-background" edges={['top']}>
             <ScrollView
                 className="flex-1"
                 contentContainerStyle={{ paddingBottom: 100 }}
@@ -46,14 +70,58 @@ export default function SettingsScreen() {
                 <Animated.View entering={FadeInUp.delay(100).duration(500)} className="px-6 pt-6 pb-2">
                     <Text className="text-3xl font-black text-foreground tracking-tighter">Settings</Text>
                     <Text className="text-muted-foreground text-sm mt-1">Configure your focus sanctuary</Text>
-
-                    {/* Debug Info */}
-                    <View className="mt-2 p-2 bg-muted/20 rounded-lg border border-border/50">
-                        <Text className="text-[8px] font-mono text-muted-foreground uppercase">
-                            Store: {theme} | NativeWind: {colorScheme}
-                        </Text>
-                    </View>
                 </Animated.View>
+
+                {/* Profile Section */}
+                <Section title="Profile">
+                    <View className="bg-card border border-border rounded-3xl p-5 mb-3 shadow-sm">
+                        <Text className="text-sm font-bold text-foreground mb-3">Display Name</Text>
+                        <View className="flex-row items-center">
+                            <View className="w-10 h-10 rounded-full bg-cyan-500/20 items-center justify-center mr-3">
+                                <User size={20} color="#06b6d4" />
+                            </View>
+                            <TextInput
+                                value={tempName}
+                                onChangeText={setTempName}
+                                placeholder="Enter your name"
+                                placeholderTextColor="#94a3b8"
+                                className="flex-1 p-3 rounded-xl border border-border bg-background text-foreground font-semibold"
+                            />
+                            {tempName !== displayName && (
+                                <TouchableOpacity onPress={handleSaveName} className="ml-2 bg-cyan-500 p-3 rounded-xl">
+                                    <Save size={18} color="#fff" />
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </View>
+                </Section>
+
+                {/* Cloud Sync */}
+                <Section title="Data & Sync">
+                    <SettingItem
+                        icon={Cloud}
+                        title="Cloud Sync"
+                        subtitle="Backup habits and sessions to Supabase"
+                        right={<Switch value={syncEnabled} onValueChange={setSyncEnabled} trackColor={{ false: "#3f3f46", true: "#06b6d4" }} />}
+                    />
+                </Section>
+
+                <Section title="Account">
+                    <SettingItem
+                        icon={Mail}
+                        title="Signed in as"
+                        subtitle={user?.email ?? 'No email available'}
+                        right={null}
+                    />
+                    <TouchableOpacity
+                        onPress={handleSignOut}
+                        activeOpacity={0.7}
+                        className="flex-row items-center justify-center gap-2 p-5 rounded-[24px] border border-destructive/20 bg-destructive/5 mt-2"
+                    >
+                        <LogOut size={18} className="text-destructive" />
+                        <Text className="text-destructive font-black text-sm uppercase tracking-widest">Sign Out</Text>
+                    </TouchableOpacity>
+                </Section>
 
                 {/* Appearance Section */}
                 <Section title="Appearance">

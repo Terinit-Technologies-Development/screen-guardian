@@ -14,8 +14,22 @@
 dist/
 web-build/
 
-# Native
+# Native (generated — track manually if writing custom Kotlin/Swift)
 android/
+!android/
+android/*
+!android/app/
+android/app/*
+!android/app/src/
+android/app/src/*
+!android/app/src/main/
+android/app/src/main/*
+!android/app/src/main/java/
+!android/app/src/main/java/**
+!android/app/src/main/res/
+android/app/src/main/res/*
+!android/app/src/main/res/xml/
+!android/app/src/main/res/xml/**
 ios/
 
 # Logs
@@ -34,3 +48,37 @@ node_modules/
 
 expo-env.d.ts
 # @end expo-cli
+
+# ============================================================
+# Environment Variables — NEVER commit real credentials
+# ============================================================
+.env
+.env.local
+.env.staging
+.env.production
+.env.*.local
+
+# EAS / Expo Build Credentials
+eas.json
+credentials.json
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.keystore
+
+# Google Services (Firebase / Maps / etc.)
+google-services.json
+GoogleService-Info.plist
+
+# Backend local secrets
+backend/.env
+backend/.env.local
+backend/node_modules/
+backend/supabase/.temp/
+
+# Miscellaneous build artifacts
+*.orig.*
+web-build/
+app.json.bak
+
